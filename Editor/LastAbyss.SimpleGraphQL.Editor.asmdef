@@ -1,0 +1,17 @@
+{
+    "name": "LastAbyss.SimpleGraphQL.Editor",
+    "references": [
+        "GUID:d9c4a3993822f42439e43ee7d2d1f243"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
