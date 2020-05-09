@@ -1,8 +1,8 @@
 # SimpleGraphQL For Unity
-SimpleGraphQL is just that -- a simple GraphQL client that doesn't have any user friendly interfaces and works with Unity.
+SimpleGraphQL is just that -- a simple GraphQL client that is mostly code based and works with Unity.
 
 ## Why and how?
-Frankly, all the existing solutions either don't work with Unity or are too complicated/don't support assembly definitions.
+Frankly, a lot of the existing solutions either don't work with Unity or are too complicated/don't support assembly definitions.
 
 Also, the world could use some more Unity-friendly GraphQL libraries.
 
@@ -34,6 +34,9 @@ That being said, this is intended to be a primarily code based package, so keep 
 This should work with all platforms (Mono/IL2CPP) except for WebGL, since Unity WebGL has issues with threading. If you are using WebGL, this package may be hit-or-miss for you at the present time.
 
 If you are having trouble with a platform, please open an issue.
+
+## Unity Version
+We're using this on Unity 2019.3.13f1. While it may work on older Unity versions, there is no strong guarantee because there have been many breaking API changes over the past couple of years, but also that some of the features being used here have not been backported. Your mileage may vary.
 
 # Getting Started
 
