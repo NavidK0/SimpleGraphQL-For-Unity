@@ -1,0 +1,17 @@
+{
+    "name": "com.lastabyss.simplegraphql",
+    "version": "1.0.0",
+    "displayName": "SimpleGraphQL",
+    "description": "A simple GraphQL client for Unity that utilizes .graphql files.",
+    "unity": "2019.3",
+    "unityRelease": "13f1",
+    "keywords": [
+        "graphql",
+        "client"
+    ],
+    "author": {
+        "name": "Last Abyss Inc.",
+        "email": "contact@lastabyss.com",
+        "url": "https://lastabyss.com"
+    }
+}
