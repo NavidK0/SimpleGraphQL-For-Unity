@@ -2,7 +2,8 @@
 SimpleGraphQL is just that -- a simple GraphQL client that is mostly code based and works with Unity.
 
 ## Why and how?
-Frankly, a lot of the existing solutions either don't work with Unity or are too complicated/don't support assembly definitions.
+This package attempts to provide a simple API that is able to interact with a GraphQL server.
+Nothing more, nothing less. No complicated setup.
 
 Also, the world could use some more Unity-friendly GraphQL libraries.
 
@@ -14,14 +15,13 @@ That being said, this is intended to be a primarily code based package, so keep 
 - Supports Queries, mutations, and subscriptions
 - Checking for error codes
 - Reads .graphql files within your project
+- Supports multiple queries per file (with operation selectors)
 - Supports custom headers
 - Async/Await & Coroutine w/ Callback
 
 ### Doesn't
 - Introspection (you are responsible for writing valid .graphql files)
-- Deserialization of JSON Responses (excluding errors)
-  - You are responsible for deserializing successful responses
-  - In turn, this allows you to use any serializer you wish
+  - There is very basic error checking, but beyond that you need to ensure that you are writing something compatible with your server (GraphiQL works great)
 
 # Supported Platforms
 
@@ -55,7 +55,8 @@ TBA
 
 > Depending on your authentication method, it is up to you to ensure that your authentication data and headers are set correctly.
 
-## Auth with Hasura
+<!-- ## Auth with Hasura
+TBA -->
 TBA
 
 <hr>

@@ -1,7 +1,8 @@
 {
     "name": "LastAbyss.SimpleGraphQL.Editor",
     "references": [
-        "GUID:d9c4a3993822f42439e43ee7d2d1f243"
+        "GUID:d9c4a3993822f42439e43ee7d2d1f243",
+        "GUID:15e3c116196bd394da80b1072fff8aa8"
     ],
     "includePlatforms": [
         "Editor"

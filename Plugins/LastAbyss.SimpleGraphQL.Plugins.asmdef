@@ -1,9 +1,7 @@
 {
-    "name": "LastAbyss.SimpleGraphQL.Runtime",
+    "name": "LastAbyss.SimpleGraphQL.Plugins",
     "references": [
-        "GUID:15e3c116196bd394da80b1072fff8aa8"
     ],
-    "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,
