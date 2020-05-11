@@ -1,8 +1,3 @@
-using System;
-using System.Runtime.CompilerServices;
-using UnityEngine;
-using UnityEngine.Networking;
-
 namespace SimpleGraphQL
 {
     public static class Utils
@@ -29,40 +24,6 @@ namespace SimpleGraphQL
             }
 
             return true;
-        }
-
-        public static UnityWebRequestAwaiter GetAwaiter(this UnityWebRequestAsyncOperation asyncOp)
-        {
-            return new UnityWebRequestAwaiter(asyncOp);
-        }
-
-        public class UnityWebRequestAwaiter : INotifyCompletion
-        {
-            private UnityWebRequestAsyncOperation asyncOp;
-            private Action continuation;
-
-            public UnityWebRequestAwaiter(UnityWebRequestAsyncOperation asyncOp)
-            {
-                this.asyncOp = asyncOp;
-                asyncOp.completed += OnRequestCompleted;
-            }
-
-            public bool IsCompleted
-            {
-                get { return asyncOp.isDone; }
-            }
-
-            public void GetResult() { }
-
-            public void OnCompleted(Action continuation)
-            {
-                this.continuation = continuation;
-            }
-
-            private void OnRequestCompleted(AsyncOperation obj)
-            {
-                continuation();
-            }
         }
     }
 }

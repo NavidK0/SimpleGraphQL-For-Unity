@@ -15,11 +15,11 @@ namespace SimpleGraphQL
     [PublicAPI]
     public class GraphQL
     {
-        public string Endpoint;
-        public string AuthScheme;
-
         public readonly List<Query> SearchableQueries;
         public readonly Dictionary<string, string> CustomHeaders;
+        
+        public string Endpoint;
+        public string AuthScheme;
 
         public GraphQL(string endpoint, string authScheme = "Bearer", IEnumerable<Query> queries = null,
             Dictionary<string, string> headers = null)
@@ -132,14 +132,6 @@ namespace SimpleGraphQL
                 Formatting.None,
                 new JsonSerializerSettings {NullValueHandling = NullValueHandling.Ignore}
             );
-        }
-
-        /// <summary>
-        /// Call this to cleanup resources.
-        /// </summary>
-        public static void Dispose()
-        {
-            HttpUtils.Dispose();
         }
     }
 }

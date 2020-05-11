@@ -62,16 +62,7 @@ TBA
 > Depending on your authentication method, it is up to you to ensure that your authentication data and headers are set correctly.
 
 # Things to Note
-
-## Disposing
-Because this lib makes use of an HttpClient that is reuses, make sure you call GraphQL.Dispose() where appropriate.
-This is generally not necessary if the GraphQL object will be used for the application's entire lifecycle.
-```cs
-private void OnApplicationQuit()
-{
-    GraphQL.Dispose();
-}
-```
+TBA
 
 <!-- ## Auth with Hasura
 TBA -->

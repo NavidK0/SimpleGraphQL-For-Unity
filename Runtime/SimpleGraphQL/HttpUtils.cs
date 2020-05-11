@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.WebSockets;
@@ -17,40 +18,13 @@ namespace SimpleGraphQL
     [PublicAPI]
     public static class HttpUtils
     {
-        public static HttpClient Client;
-
         public static event Action<string> SubscriptionDataReceived;
 
-        private static bool _disposed;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         public static void PreInit()
         {
-            // Dispose it if it already exists from a previous context.
-            // Otherwise it will exist until the end of the application's life.
-            // We only need one socket open for GraphQL purposes, so we don't need to continuously close and open sockets.
-            Dispose();
             SubscriptionDataReceived = null;
-        }
-
-        public static void CreateHttpClient()
-        {
-            if (Client == null || _disposed)
-            {
-                Client = new HttpClient(new HttpClientHandler
-                {
-                    UseProxy = false,
-                    AllowAutoRedirect = true
-                });
-            }
-
-            _disposed = false;
-        }
-
-        public static void Dispose()
-        {
-            Client?.Dispose();
-            _disposed = true;
         }
 
         public static async Task<string> PostQueryAsync(
@@ -61,32 +35,34 @@ namespace SimpleGraphQL
             Dictionary<string, string> headers = null
         )
         {
-            CreateHttpClient();
-
             var uri = new Uri(url);
 
-            if (!authToken.IsNullOrWhitespace())
-                Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(authScheme, authToken);
-
+            var request = new UnityWebRequest(uri, "POST")
+            {
+                uploadHandler = new UploadHandlerRaw(payload),
+                downloadHandler = new DownloadHandlerBuffer()
+            };
 
             try
             {
-                var content = new ByteArrayContent(payload);
-                content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/json");
-                content.Headers.ContentLength = payload.Length;
+                request.SetRequestHeader("Content-Type", "application/json");
 
                 if (headers != null)
                 {
                     foreach (KeyValuePair<string, string> header in headers)
                     {
-                        content.Headers.Remove(header.Key);
-                        content.Headers.TryAddWithoutValidation(header.Key, header.Value);
+                        request.SetRequestHeader(header.Key, header.Value);
                     }
                 }
 
-                HttpResponseMessage response = await Client.PostAsync(uri, content);
-                string jsonResponse = await response.Content.ReadAsStringAsync();
-                return jsonResponse;
+                request.SendWebRequest();
+
+                while (!request.isDone)
+                {
+                    await Task.Yield();
+                }
+
+                return request.downloadHandler.text;
             }
             catch (Exception e)
             {
