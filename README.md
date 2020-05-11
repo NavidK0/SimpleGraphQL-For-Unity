@@ -24,10 +24,10 @@ That being said, this is intended to be a primarily code based package, so keep 
   - There is very basic error checking, but beyond that you need to ensure that you are writing something compatible with your server (GraphiQL works great)
 
 # Requirements
-| Requirements      |
-| ----------------- |
-| .NET 4.6          |
-| I guess that's it |
+| Requirements       |
+| ------------------ |
+| .NET 4.6 or higher |
+| I guess that's it  |
 
 # Supported Platforms
 
@@ -37,7 +37,7 @@ That being said, this is intended to be a primarily code based package, so keep 
 | IL2CPP    | ✔         |
 | WebGL     | ❓         |
 
-This should work with all platforms (Mono/IL2CPP) except for WebGL, since Unity WebGL has issues with threading. If you are using WebGL, this package may be hit-or-miss for you at the present time.
+This should work with all platforms (Mono/IL2CPP) except for WebGL, since Unity WebGL has issues with threading. If you are using WebGL, this package may be hit-or-miss for you at the present time. It makes use of UnityWebRequest where possible, but the WebSockets are the main issue, so subscriptions may not properly work. If you do not need subscriptions, WebGL may work just fine.
 
 If you are having trouble with a platform, please open an issue.
 
@@ -66,7 +66,6 @@ TBA
 
 <!-- ## Auth with Hasura
 TBA -->
-TBA
 
 <hr>
 More to be added soon
