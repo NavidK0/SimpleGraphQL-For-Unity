@@ -1,10 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
-using Newtonsoft.Json;
 using UnityEngine;
 
 namespace SimpleGraphQL
@@ -21,8 +19,12 @@ namespace SimpleGraphQL
         public string Endpoint;
         public string AuthScheme;
 
-        public GraphQLClient(string endpoint, string authScheme = "Bearer", IEnumerable<Query> queries = null,
-            Dictionary<string, string> headers = null)
+        public GraphQLClient(
+            string endpoint,
+            string authScheme = "Bearer",
+            IEnumerable<Query> queries = null,
+            Dictionary<string, string> headers = null
+        )
         {
             Endpoint = endpoint;
             AuthScheme = authScheme;
@@ -38,9 +40,32 @@ namespace SimpleGraphQL
             CustomHeaders = config.CustomHeaders.ToDictionary(header => header.Key, header => header.Value);
         }
 
-        public async Task<string> SendAsync(Query query, string authToken = null,
+        public async Task<string> SendAsync(
+            Query query,
+            string authToken = null,
             Dictionary<string, string> variables = null,
-            Dictionary<string, string> headers = null)
+            Dictionary<string, string> headers = null
+        )
+        {
+            return await SendAsync(query, AuthScheme, authToken, variables, headers);
+        }
+
+        /// <summary>
+        /// Send a query!
+        /// </summary>
+        /// <param name="query">The query you are sending. These should be generated from your graphQL files.</param>
+        /// <param name="authScheme">The authScheme to be used.</param>
+        /// <param name="authToken">The authToken</param>
+        /// <param name="variables">Any variables you want to pass</param>
+        /// <param name="headers">Any headers you want to pass</param>
+        /// <returns></returns>
+        public async Task<string> SendAsync(
+            Query query,
+            string authScheme = "Bearer",
+            string authToken = null,
+            Dictionary<string, string> variables = null,
+            Dictionary<string, string> headers = null
+        )
         {
             if (query.OperationType == OperationType.Subscription)
             {
@@ -58,24 +83,99 @@ namespace SimpleGraphQL
                 }
             }
 
-            byte[] bytes = QueryToBytes(query, variables);
-            string postQueryAsync = await HttpUtils.PostQueryAsync(Endpoint, bytes, AuthScheme, authToken, headers);
+            string postQueryAsync = await HttpUtils.PostQueryAsync(
+                Endpoint,
+                query,
+                AuthScheme,
+                authToken,
+                variables, headers
+            );
 
             return postQueryAsync;
         }
 
-        public async Task SubscribeAsync(Query query, string authToken = null,
+        /// <summary>
+        /// Registers a listener for subscriptions.
+        /// </summary>
+        /// <param name="listener"></param>
+        public void RegisterListener(Action<string> listener)
+        {
+            HttpUtils.SubscriptionDataReceived += listener;
+        }
+        /// <summary>
+        /// Unregisters a listener for subscriptions.
+        /// </summary>
+        /// <param name="listener"></param>
+
+        public void UnregisterListener(Action<string> listener)
+        {
+            HttpUtils.SubscriptionDataReceived -= listener;
+        }
+
+        /// <summary>
+        /// Subscribe to a query in GraphQL.
+        /// </summary>
+        /// <param name="query"></param>
+        /// <param name="authToken"></param>
+        /// <param name="variables"></param>
+        /// <param name="headers"></param>
+        /// <returns>True if successful</returns>
+        public async Task<bool> SubscribeAsync(
+            Query query,
+            string authToken = null,
             Dictionary<string, string> variables = null,
-            Dictionary<string, string> headers = null)
+            Dictionary<string, string> headers = null
+        )
+        {
+            return await SubscribeAsync(query, AuthScheme, authToken, variables, headers);
+        }
+
+        public async Task<bool> SubscribeAsync(
+            Query query,
+            string authScheme = "Bearer",
+            string authToken = null,
+            Dictionary<string, string> variables = null,
+            Dictionary<string, string> headers = null
+        )
         {
             if (query.OperationType != OperationType.Subscription)
             {
                 Debug.LogError("Operation Type should be a subscription!");
+                return false;
+            }
+
+            if (CustomHeaders != null)
+            {
+                if (headers == null) headers = new Dictionary<string, string>();
+
+                foreach (KeyValuePair<string, string> header in CustomHeaders)
+                {
+                    headers.Add(header.Key, header.Value);
+                }
+            }
+
+            if (!HttpUtils.IsWebSocketReady())
+            {
+                // Prepare the socket before continuing.
+                await HttpUtils.WebSocketConnect(Endpoint, authScheme, authToken, "graphql-ws", headers);
+            }
+
+            return await HttpUtils.WebSocketSubscribe(query.ToString(), query, variables);
+        }
+
+        /// <summary>
+        /// Unsubscribe from a query.
+        /// </summary>
+        /// <param name="query"></param>
+        public async Task Unsubscribe(Query query)
+        {
+            if (!HttpUtils.IsWebSocketReady())
+            {
+                // Socket is already apparently closed, so this wouldn't work anyways.
                 return;
             }
 
-
-            throw new NotImplementedException();
+            await HttpUtils.WebSocketUnsubscribe(query.ToString());
         }
 
         /// <summary>
@@ -83,29 +183,61 @@ namespace SimpleGraphQL
         /// </summary>
         /// <param name="fileName"></param>
         /// <returns></returns>
-        public Query FindQueryByFileName(string fileName)
+        public Query FindQuery(string fileName)
         {
             return SearchableQueries?.FirstOrDefault(x => x.FileName == fileName);
         }
 
         /// <summary>
-        /// Searches for all queries within a file.
+        /// Finds the first query located in a file.
         /// </summary>
         /// <param name="fileName"></param>
         /// <returns></returns>
-        public List<Query> FindQueriesByFileName(string fileName)
+        public Query FindQueryByOperation(string operationName)
         {
-            return SearchableQueries?.FindAll(x => x.FileName == fileName);
+            return SearchableQueries?.FirstOrDefault(x => x.OperationName == operationName);
         }
 
         /// <summary>
-        /// Finds the first query with the given operation name.
+        /// Finds a query by fileName and operationName.
         /// </summary>
-        /// <param name="operation"></param>
+        /// <param name="fileName"></param>
+        /// <param name="operationName"></param>
         /// <returns></returns>
-        public Query FindQueryByOperation(string operation)
+        public Query FindQuery(string fileName, string operationName)
         {
-            return SearchableQueries?.FirstOrDefault(x => x.OperationName == operation);
+            return SearchableQueries?.FirstOrDefault(x => x.FileName == fileName && x.OperationName == operationName);
+        }
+
+        /// <summary>
+        /// Finds a query by operationName and operationType.
+        /// </summary>
+        /// <param name="fileName"></param>
+        /// <param name="operationName"></param>
+        /// <param name="operationType"></param>
+        /// <returns></returns>
+        public Query FindQuery(string operationName, OperationType operationType)
+        {
+            return SearchableQueries?.FirstOrDefault(x =>
+                x.OperationName == operationName &&
+                x.OperationType == operationType
+            );
+        }
+
+        /// <summary>
+        /// Finds a query by fileName, operationName, and operationType.
+        /// </summary>
+        /// <param name="fileName"></param>
+        /// <param name="operationName"></param>
+        /// <param name="operationType"></param>
+        /// <returns></returns>
+        public Query FindQuery(string fileName, string operationName, OperationType operationType)
+        {
+            return SearchableQueries?.FirstOrDefault(
+                x => x.FileName == fileName &&
+                     x.OperationName == operationName &&
+                     x.OperationType == operationType
+            );
         }
 
         /// <summary>
@@ -117,21 +249,6 @@ namespace SimpleGraphQL
         public List<Query> FindQueriesByOperation(string operation)
         {
             return SearchableQueries?.FindAll(x => x.OperationName == operation);
-        }
-
-        public static byte[] QueryToBytes(Query query, Dictionary<string, string> variables = null)
-        {
-            return Encoding.ASCII.GetBytes(QueryToJson(query, variables));
-        }
-
-        public static string QueryToJson(Query query, Dictionary<string, string> variables = null)
-        {
-            return JsonConvert.SerializeObject
-            (
-                new {query = query.Source, operationName = query.OperationName, variables},
-                Formatting.None,
-                new JsonSerializerSettings {NullValueHandling = NullValueHandling.Ignore}
-            );
         }
     }
 }

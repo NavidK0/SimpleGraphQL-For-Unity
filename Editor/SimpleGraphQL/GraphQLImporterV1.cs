@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace SimpleGraphQL
 {
-    [ScriptedImporter(2, "graphql")]
+    [ScriptedImporter(1, "graphql")]
     public class GraphQLImporterV1 : ScriptedImporter
     {
         public override void OnImportAsset(AssetImportContext ctx)
@@ -17,6 +17,7 @@ namespace SimpleGraphQL
             var lexer = new Lexer();
             var parser = new Parser(lexer);
             string contents = File.ReadAllText(ctx.assetPath);
+            string fileName = Path.GetFileNameWithoutExtension(ctx.assetPath);
             var queryFile = ScriptableObject.CreateInstance<GraphQLFile>();
 
             GraphQLDocument graphQLDocument = parser.Parse(new Source(contents));
@@ -45,7 +46,7 @@ namespace SimpleGraphQL
 
                     queryFile.Queries.Add(new Query
                     {
-                        FileName = queryFile.name,
+                        FileName = fileName,
                         OperationName = operation.Name.Value,
                         OperationType = operationType,
                         Source = contents

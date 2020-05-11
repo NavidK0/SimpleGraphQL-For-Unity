@@ -1,5 +1,8 @@
 using System;
+using System.Collections.Generic;
+using System.Text;
 using JetBrains.Annotations;
+using Newtonsoft.Json;
 
 namespace SimpleGraphQL
 {
@@ -31,6 +34,33 @@ namespace SimpleGraphQL
         /// The actual query itself.
         /// </summary>
         public string Source;
+
+        public override string ToString()
+        {
+            return $"{FileName}:{OperationName}:{OperationType}";
+        }
+    }
+
+    [PublicAPI]
+    public static class QueryExtensions
+    {
+        public static byte[] ToBytes(this Query query, Dictionary<string, string> variables = null)
+        {
+            return Encoding.ASCII.GetBytes(ToJson(query, variables));
+        }
+
+        public static string ToJson(this Query query, Dictionary<string, string> variables = null,
+            bool prettyPrint = false)
+        {
+            return JsonConvert.SerializeObject
+            (new
+                {
+                    query = query.Source, operationName = query.OperationName, variables
+                },
+                prettyPrint ? Formatting.Indented : Formatting.None,
+                new JsonSerializerSettings {NullValueHandling = NullValueHandling.Ignore}
+            );
+        }
     }
 
     [PublicAPI]

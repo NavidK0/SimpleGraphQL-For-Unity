@@ -1,8 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Net;
-using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
@@ -18,24 +15,42 @@ namespace SimpleGraphQL
     [PublicAPI]
     public static class HttpUtils
     {
-        public static event Action<string> SubscriptionDataReceived;
+        private static ClientWebSocket _webSocket;
 
+        /// <summary>
+        /// Called when the websocket receives subscription data.
+        /// </summary>
+        public static event Action<string> SubscriptionDataReceived;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         public static void PreInit()
         {
+            _webSocket?.Dispose();
             SubscriptionDataReceived = null;
         }
 
+        /// <summary>
+        /// POST a query to the given endpoint url.
+        /// </summary>
+        /// <param name="url">The endpoint url.</param>
+        /// <param name="query">The query</param>
+        /// <param name="authScheme">The authentication scheme to be used.</param>
+        /// <param name="authToken">The actual auth token.</param>
+        /// <param name="variables">Any variables you want to pass in</param>
+        /// <param name="headers">Any headers that should be passed in</param>
+        /// <returns></returns>
         public static async Task<string> PostQueryAsync(
             string url,
-            byte[] payload,
+            Query query,
             string authScheme = "Bearer",
             string authToken = null,
+            Dictionary<string, string> variables = null,
             Dictionary<string, string> headers = null
         )
         {
             var uri = new Uri(url);
+
+            byte[] payload = query.ToBytes(variables);
 
             var request = new UnityWebRequest(uri, "POST")
             {
@@ -43,18 +58,21 @@ namespace SimpleGraphQL
                 downloadHandler = new DownloadHandlerBuffer()
             };
 
+            if (authToken != null)
+                request.SetRequestHeader("Authorization", $"{authScheme} {authToken}");
+
+            request.SetRequestHeader("Content-Type", "application/json");
+
+            if (headers != null)
+            {
+                foreach (KeyValuePair<string, string> header in headers)
+                {
+                    request.SetRequestHeader(header.Key, header.Value);
+                }
+            }
+
             try
             {
-                request.SetRequestHeader("Content-Type", "application/json");
-
-                if (headers != null)
-                {
-                    foreach (KeyValuePair<string, string> header in headers)
-                    {
-                        request.SetRequestHeader(header.Key, header.Value);
-                    }
-                }
-
                 request.SendWebRequest();
 
                 while (!request.isDone)
@@ -71,73 +89,154 @@ namespace SimpleGraphQL
             }
         }
 
-        public static async Task<WebSocket> WebSocketConnect(
+        public static bool IsWebSocketReady() =>
+            _webSocket?.State == WebSocketState.Connecting || _webSocket?.State == WebSocketState.Open;
+
+        /// <summary>
+        /// Connect to the GraphQL server. Call is necessary in order to send subscription queries via WebSocket.
+        /// </summary>
+        /// <param name="url"></param>
+        /// <param name="authScheme"></param>
+        /// <param name="authToken"></param>
+        /// <param name="headers"></param>
+        /// <param name="protocol"></param>
+        /// <returns></returns>
+        public static async Task WebSocketConnect(
             string url,
-            string query,
-            bool secure = true,
-            string socketId = "1",
-            string protocol = "graphql-ws"
+            string authScheme = "Bearer",
+            string authToken = null,
+            string protocol = "graphql-ws",
+            Dictionary<string, string> headers = null
         )
         {
-            url = url
-                .Replace("http", secure ? "wss" : "ws")
-                .Replace("https", secure ? "wss" : "ws");
+            url = url.Replace("http", "ws");
 
             var uri = new Uri(url);
-            var socket = new ClientWebSocket();
+            _webSocket = new ClientWebSocket();
+            _webSocket.Options.AddSubProtocol(protocol);
 
-            socket.Options.AddSubProtocol(protocol);
+            if (authToken != null)
+                _webSocket.Options.SetRequestHeader("Authorization", $"{authScheme} {authToken}");
+
+            _webSocket.Options.SetRequestHeader("Content-Type", "application/json");
+
+            if (headers != null)
+            {
+                foreach (KeyValuePair<string, string> header in headers)
+                {
+                    _webSocket.Options.SetRequestHeader(header.Key, header.Value);
+                }
+            }
 
             try
             {
-                await socket.ConnectAsync(uri, CancellationToken.None);
+                Debug.Log("Websocket is connecting");
+                await _webSocket.ConnectAsync(uri, CancellationToken.None);
 
-                if (socket.State == WebSocketState.Open)
-                    Debug.Log("[SimpleGraphQL] WebSocket open.");
-                else
-                {
-                    Debug.Log("[SimpleGraphQ] WebSocket is not open: STATE: " + socket.State);
-                }
+                Debug.Log("Websocket is initting");
+                // Initialize the socket at the server side
+                await _webSocket.SendAsync(
+                    new ArraySegment<byte>(Encoding.ASCII.GetBytes(@"{""type"":""connection_init""}")),
+                    WebSocketMessageType.Text,
+                    true,
+                    CancellationToken.None
+                );
 
-                await WebSocketInit(socket);
-
+                Debug.Log("Websocket is updating");
                 // Start listening to the websocket for data.
-                WebSocketUpdate(socket);
-
-                await WebSocketSend(socket, socketId, query);
+                WebSocketUpdate();
             }
             catch (Exception e)
             {
-                Debug.LogError("[SimpleGraphQL] " + e.Message);
+                Debug.LogError(e.Message);
+            }
+        }
+
+        /// <summary>
+        /// Disconnect the websocket.
+        /// </summary>
+        /// <returns></returns>
+        public static async Task WebSocketDisconnect()
+        {
+            if (_webSocket?.State != WebSocketState.Open)
+            {
+                Debug.LogError("Attempted to disconnect from a socket that was not open!");
+                return;
             }
 
-            return socket;
+            await _webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Socket closed.", CancellationToken.None);
         }
 
-        private static async Task WebSocketInit(WebSocket socket)
+        /// <summary>
+        /// Subscribe to a query.
+        /// </summary>
+        /// <param name="id">Used to identify the subscription. Must be unique per query.</param>
+        /// <param name="query">The subscription query.</param>
+        /// <param name="variables"></param>
+        /// <returns>true if successful</returns>
+        public static async Task<bool> WebSocketSubscribe(
+            string id,
+            Query query,
+            Dictionary<string, string> variables
+        )
         {
-            await socket.SendAsync(
-                new ArraySegment<byte>(
-                    Encoding.ASCII.GetBytes(@"{""type"":""connection_init""}")
-                ),
+            if (!IsWebSocketReady())
+            {
+                Debug.LogError("Attempted to subscribe to a query without connecting to a WebSocket first!");
+                return false;
+            }
+
+            string json = JsonConvert.SerializeObject(
+                new
+                {
+                    id,
+                    type = "start",
+                    payload = new
+                    {
+                        query = query.Source,
+                        variables,
+                        operationName = query.OperationName
+                    }
+                },
+                Formatting.None,
+                new JsonSerializerSettings()
+                {
+                    NullValueHandling = NullValueHandling.Ignore
+                }
+            );
+
+            await _webSocket.SendAsync(
+                new ArraySegment<byte>(Encoding.ASCII.GetBytes(json)),
                 WebSocketMessageType.Text,
                 true,
-                CancellationToken.None);
+                CancellationToken.None
+            );
+
+            return true;
         }
 
-        private static async Task WebSocketSend(WebSocket socket, string id, string query)
+        /// <summary>
+        /// Unsubscribe from this query.
+        /// </summary>
+        /// <param name="id">Used to identify the subscription. Must be unique per query.</param>
+        /// <returns></returns>
+        public static async Task WebSocketUnsubscribe(string id)
         {
-            string json = JsonConvert.SerializeObject(new {id, type = "start", payload = new {query}});
+            if (!IsWebSocketReady())
+            {
+                Debug.LogError("Attempted to unsubscribe to a query without connecting to a WebSocket first!");
+                return;
+            }
 
-            await socket.SendAsync(
-                new ArraySegment<byte>(Encoding.ASCII.GetBytes(json)),
+            await _webSocket.SendAsync(
+                new ArraySegment<byte>(Encoding.ASCII.GetBytes($@"{{""type"":""stop"",""id"":""{id}""}}")),
                 WebSocketMessageType.Text,
                 true,
                 CancellationToken.None
             );
         }
 
-        private static async void WebSocketUpdate(WebSocket socket)
+        private static async void WebSocketUpdate()
         {
             while (true)
             {
@@ -150,19 +249,19 @@ namespace SimpleGraphQL
                 }
 
                 WebSocketReceiveResult wsReceiveResult;
-                var jsonResult = "";
+                var jsonBuild = new StringBuilder();
 
                 do
                 {
-                    wsReceiveResult = await socket.ReceiveAsync(buffer, CancellationToken.None);
+                    wsReceiveResult = await _webSocket.ReceiveAsync(buffer, CancellationToken.None);
 
-                    jsonResult += Encoding.UTF8.GetString(buffer.Array, buffer.Offset, wsReceiveResult.Count);
+                    jsonBuild.Append(Encoding.UTF8.GetString(buffer.Array, buffer.Offset, wsReceiveResult.Count));
                 } while (!wsReceiveResult.EndOfMessage);
 
+                var jsonResult = jsonBuild.ToString();
                 if (jsonResult.IsNullOrEmpty()) return;
 
                 JObject jsonObj;
-
                 try
                 {
                     jsonObj = JObject.Parse(jsonResult);
@@ -175,26 +274,38 @@ namespace SimpleGraphQL
                 var subType = (string) jsonObj["type"];
                 switch (subType)
                 {
+                    case "connection_error":
+                    {
+                        throw new WebSocketException("Connection error. Error: " + jsonResult);
+                    }
                     case "connection_ack":
                     {
-                        Debug.Log("[SimpleGraphQL] Successfully connected to WebSocket.");
+                        Debug.Log("Websocket connection acknowledged.");
+                        continue;
+                    }
+                    case "data":
+                    {
+                        JToken jToken = jsonObj["payload"];
+
+                        if (jToken != null)
+                        {
+                            SubscriptionDataReceived?.Invoke(jToken.ToString());
+                        }
+
                         continue;
                     }
                     case "error":
                     {
                         throw new WebSocketException("Handshake error Error: " + jsonResult);
                     }
-                    case "connection_error":
+                    case "complete":
                     {
-                        throw new WebSocketException("Connection error. Error: " + jsonResult);
-                    }
-                    case "data":
-                    {
-                        SubscriptionDataReceived?.Invoke(jsonResult);
-                        continue;
+                        Debug.Log("Server sent complete, it's done sending data.");
+                        break;
                     }
                     case "ka":
                     {
+                        // stayin' alive, stayin' alive
                         continue;
                     }
                     case "subscription_fail":
@@ -205,17 +316,6 @@ namespace SimpleGraphQL
 
                 break;
             }
-        }
-
-        public static async Task WebsocketDisconnect(ClientWebSocket webSocket, string socketId = "1")
-        {
-            var buffer =
-                new ArraySegment<byte>(
-                    Encoding.ASCII.GetBytes($@"{{""type"":""stop"",""id"":""{socketId}""}}")
-                );
-
-            await webSocket.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None);
-            await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Socket closed.", CancellationToken.None);
         }
     }
 }
