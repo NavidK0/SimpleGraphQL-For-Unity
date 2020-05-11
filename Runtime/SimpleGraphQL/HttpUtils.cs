@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
@@ -7,7 +9,6 @@ using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using SimpleGraphQL.AsyncAwaitUtil;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -16,70 +17,82 @@ namespace SimpleGraphQL
     [PublicAPI]
     public static class HttpUtils
     {
+        public static HttpClient Client;
+
         public static event Action<string> SubscriptionDataReceived;
+
+        private static bool _disposed;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         public static void PreInit()
         {
+            // Dispose it if it already exists from a previous context.
+            // Otherwise it will exist until the end of the application's life.
+            // We only need one socket open for GraphQL purposes, so we don't need to continuously close and open sockets.
+            Dispose();
             SubscriptionDataReceived = null;
         }
 
-        public static async Task<UnityWebRequest> PostAsync(
+        public static void CreateHttpClient()
+        {
+            if (Client == null || _disposed)
+            {
+                Client = new HttpClient(new HttpClientHandler
+                {
+                    UseProxy = false,
+                    AllowAutoRedirect = true
+                });
+            }
+
+            _disposed = false;
+        }
+
+        public static void Dispose()
+        {
+            Client?.Dispose();
+            _disposed = true;
+        }
+
+        public static async Task<string> PostQueryAsync(
             string url,
             byte[] payload,
+            string authScheme = "Bearer",
+            string authToken = null,
             Dictionary<string, string> headers = null
         )
         {
-            UnityWebRequest request = UnityWebRequest.Post(url, UnityWebRequest.kHttpVerbPOST);
-            request.uploadHandler = new UploadHandlerRaw(payload);
+            CreateHttpClient();
 
-            if (headers != null)
-                foreach (KeyValuePair<string, string> keyValuePair in headers)
-                {
-                    request.SetRequestHeader(keyValuePair.Key, keyValuePair.Value);
-                }
-
-            request.SetRequestHeader("Content-Type", "application/json");
-
-            try
-            {
-                await request.SendWebRequest();
-            }
-            catch (Exception e)
-            {
-                Debug.LogWarning("[SimpleGraphQL] " + e);
-            }
-
-            if (request.error != null)
-            {
-                Debug.LogError(request.error);
-            }
-
-            return request;
-        }
-
-        public static async Task<UnityWebRequest> GetAsync(string url, string authToken = null)
-        {
-            UnityWebRequest request = UnityWebRequest.Get(url);
+            var uri = new Uri(url);
 
             if (!authToken.IsNullOrWhitespace())
-                request.SetRequestHeader("Authorization", "Bearer " + authToken);
+                Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(authScheme, authToken);
+
 
             try
             {
-                await request.SendWebRequest();
+                var content = new ByteArrayContent(payload);
+                content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/json");
+                content.Headers.ContentLength = payload.Length;
+
+                if (headers != null)
+                {
+                    foreach (KeyValuePair<string, string> header in headers)
+                    {
+                        content.Headers.Remove(header.Key);
+                        content.Headers.TryAddWithoutValidation(header.Key, header.Value);
+                    }
+                }
+
+                HttpResponseMessage response = await Client.PostAsync(uri, content);
+                string jsonResponse = await response.Content.ReadAsStringAsync();
+                return jsonResponse;
             }
             catch (Exception e)
             {
-                Debug.LogWarning("[SimpleGraphQL] " + e);
+                Debug.LogError("[SimpleGraphQL] " + e);
+                return null;
             }
-
-            if (request.error != null)
-            {
-                Debug.LogError(request.error);
-            }
-
-            return request;
         }
 
         public static async Task<WebSocket> WebSocketConnect(
@@ -119,7 +132,7 @@ namespace SimpleGraphQL
             }
             catch (Exception e)
             {
-                Debug.LogWarning("[SimpleGraphQL] " + e.Message);
+                Debug.LogError("[SimpleGraphQL] " + e.Message);
             }
 
             return socket;

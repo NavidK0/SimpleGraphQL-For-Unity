@@ -3,40 +3,43 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Castle.Core.Internal;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
 using UnityEngine;
-using UnityEngine.Networking;
 
 namespace SimpleGraphQL
 {
+    /// <summary>
+    /// This API object is meant to be reused, so keep an instance of it somewhere!
+    /// </summary>
     [PublicAPI]
     public class GraphQL
     {
         public string Endpoint;
-        public string AuthToken;
-        public Query[] SearchableQueries;
-        public (string header, string value)[] CustomHeaders;
+        public string AuthScheme;
 
-        public GraphQL(string endpoint, string authToken = null, IEnumerable<Query> queries = null,
-            IEnumerable<(string header, string value)> headers = null)
+        public readonly List<Query> SearchableQueries;
+        public readonly Dictionary<string, string> CustomHeaders;
+
+        public GraphQL(string endpoint, string authScheme = "Bearer", IEnumerable<Query> queries = null,
+            Dictionary<string, string> headers = null)
         {
             Endpoint = endpoint;
-            AuthToken = authToken;
-            SearchableQueries = queries?.ToArray();
-            CustomHeaders = headers?.ToArray();
+            AuthScheme = authScheme;
+            SearchableQueries = queries?.ToList();
+            CustomHeaders = headers;
         }
 
         public GraphQL(GraphQLConfig config)
         {
             Endpoint = config.Endpoint;
-            AuthToken = config.AuthToken;
-            SearchableQueries = config.Files.SelectMany(x => x.Queries).ToArray();
-            CustomHeaders = config.CustomHeaders.Select(x => (x.Key, x.Value)).ToArray();
+            AuthScheme = config.AuthScheme;
+            SearchableQueries = config.Files.SelectMany(x => x.Queries).ToList();
+            CustomHeaders = config.CustomHeaders.ToDictionary(header => header.Key, header => header.Value);
         }
 
-        public async Task<string> SendAsync(Query query, Dictionary<string, string> variables = null,
+        public async Task<string> SendAsync(Query query, string authToken = null,
+            Dictionary<string, string> variables = null,
             Dictionary<string, string> headers = null)
         {
             if (query.OperationType == OperationType.Subscription)
@@ -45,22 +48,24 @@ namespace SimpleGraphQL
                 return null;
             }
 
-            if (CustomHeaders != null && headers != null)
+            if (CustomHeaders != null)
             {
-                foreach ((string header, string value) in CustomHeaders)
+                if (headers == null) headers = new Dictionary<string, string>();
+
+                foreach (KeyValuePair<string, string> header in CustomHeaders)
                 {
-                    headers.Add(header, value);
+                    headers.Add(header.Key, header.Value);
                 }
             }
 
             byte[] bytes = QueryToBytes(query, variables);
-            UnityWebRequest request = await HttpUtils.PostAsync(Endpoint, bytes, headers);
-            string downloadHandlerText = request.downloadHandler.text;
+            string postQueryAsync = await HttpUtils.PostQueryAsync(Endpoint, bytes, AuthScheme, authToken, headers);
 
-            return downloadHandlerText;
+            return postQueryAsync;
         }
 
-        public async Task SubscribeAsync(Query query, Dictionary<string, string> variables = null,
+        public async Task SubscribeAsync(Query query, string authToken = null,
+            Dictionary<string, string> variables = null,
             Dictionary<string, string> headers = null)
         {
             if (query.OperationType != OperationType.Subscription)
@@ -88,7 +93,7 @@ namespace SimpleGraphQL
         /// </summary>
         /// <param name="fileName"></param>
         /// <returns></returns>
-        public Query[] FindQueriesByFileName(string fileName)
+        public List<Query> FindQueriesByFileName(string fileName)
         {
             return SearchableQueries?.FindAll(x => x.FileName == fileName);
         }
@@ -109,7 +114,7 @@ namespace SimpleGraphQL
         /// </summary>
         /// <param name="operation"></param>
         /// <returns></returns>
-        public Query[] FindQueriesByOperation(string operation)
+        public List<Query> FindQueriesByOperation(string operation)
         {
             return SearchableQueries?.FindAll(x => x.OperationName == operation);
         }
@@ -127,6 +132,14 @@ namespace SimpleGraphQL
                 Formatting.None,
                 new JsonSerializerSettings {NullValueHandling = NullValueHandling.Ignore}
             );
+        }
+
+        /// <summary>
+        /// Call this to cleanup resources.
+        /// </summary>
+        public static void Dispose()
+        {
+            HttpUtils.Dispose();
         }
     }
 }

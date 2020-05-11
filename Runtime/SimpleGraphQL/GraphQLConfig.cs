@@ -21,11 +21,11 @@ namespace SimpleGraphQL
         public List<GraphQLFile> Files;
 
         /// <summary>
-        /// If you need authentication, this is used to pass in the auth bearer token.
-        /// Otherwise, you can use headers or a JWT instead for your own auth.
+        /// Set the auth scheme to be used here if you need authentication.
+        /// You can also use CustomHeaders to pass in authentication if needed, but this is inherently less secure.
         /// </summary>
         [Header("Authorization")]
-        public string AuthToken;
+        public string AuthScheme = "Bearer";
 
         /// <summary>
         /// You can use this to include Headers on every query. This is useful if you are debugging or need

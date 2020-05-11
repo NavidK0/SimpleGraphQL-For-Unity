@@ -1,7 +1,7 @@
 # SimpleGraphQL For Unity
 SimpleGraphQL is just that -- a simple GraphQL client that is mostly code based and works with Unity.
 
-## Why and how?
+## About
 This package attempts to provide a simple API that is able to interact with a GraphQL server.
 Nothing more, nothing less. No complicated setup.
 
@@ -22,6 +22,12 @@ That being said, this is intended to be a primarily code based package, so keep 
 ### Doesn't
 - Introspection (you are responsible for writing valid .graphql files)
   - There is very basic error checking, but beyond that you need to ensure that you are writing something compatible with your server (GraphiQL works great)
+
+# Requirements
+| Requirements      |
+| ----------------- |
+| .NET 4.6          |
+| I guess that's it |
 
 # Supported Platforms
 
@@ -54,6 +60,18 @@ TBA
 # Authentication and Headers
 
 > Depending on your authentication method, it is up to you to ensure that your authentication data and headers are set correctly.
+
+# Things to Note
+
+## Disposing
+Because this lib makes use of an HttpClient that is reuses, make sure you call GraphQL.Dispose() where appropriate.
+This is generally not necessary if the GraphQL object will be used for the application's entire lifecycle.
+```cs
+private void OnApplicationQuit()
+{
+    GraphQL.Dispose();
+}
+```
 
 <!-- ## Auth with Hasura
 TBA -->
