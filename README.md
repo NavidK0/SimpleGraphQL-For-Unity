@@ -44,28 +44,144 @@ If you are having trouble with a platform, please open an issue.
 ## Unity Version
 We're using this on Unity 2019.3.13f1. While it may work on older Unity versions, there is no strong guarantee because there have been many breaking API changes over the past couple of years, but also that some of the features being used here have not been backported. Your mileage may vary.
 
-# Getting Started
+# Quick Start
 
 > SimpleGraphQL makes use of .graphql files that you must write yourself. It is up to you to make sure they are valid. Many IDEs support this function natively or through plugins.
 
-## Queries
-TBA
+## Configuration
 
-## Mutations
-TBA
+### Import: Put your .graphql files somewhere in your Assets folder.
 
-## Subscriptions
-TBA
+### Create a Config
+1. Right Click -> Create -> SimpleGraphQL -> GraphQL Config
+2. Fill in values
+![img](https://i.imgur.com/rs8EIEM.png)
+> This inspector looks this way because of Odin Inspector. Go check it out, it is a massive time saver.
+
+### Reference GraphQL Config
+```cs
+public GraphQLConfig Config;
+```
+
+### Queries & Mutations
+```cs
+public async void QueryOrMutation()
+{
+    var graphQL = new GraphQLClient(Config);
+
+    // You can search by file name, operation name, or operation type
+    // or... mix and match between all three
+    Query query = graphQL.FindQuery("FileName", "OperationName", OperationType.Query);
+
+    string results = await graphQL.SendAsync(
+        query,
+        "authToken",
+        new Dictionary<string, string>
+        {
+            {"variable", "value"}
+        }
+    );
+
+    Debug.Log(results);
+}
+```
+
+### Subscriptions
+```cs
+public async void Subscribe()
+{
+    var graphQL = new GraphQLClient(Config);
+    Query query = graphQL.FindQuery("SubscribeFile");
+
+    graphQL.RegisterListener(OnSubscriptionUpdated);
+
+    bool success = await graphQL.SubscribeAsync(
+        query,
+        "authToken",
+        new Dictionary<string, string>
+        {
+            {"variable", "value"}
+        }
+    );
+    
+    Debug.Log(success ? "Subscribed!" : "Subscribe failed!");
+}
+
+public async void Unsubscribe()
+{
+    var graphQL = new GraphQLClient(Config);
+    Query query = graphQL.FindQuery("SubscribeScoresForLevel");
+
+    await graphQL.Unsubscribe(query);
+    graphQL.UnregisterListener(OnSubscriptionUpdated);
+    Debug.Log("Unsubscribed!");
+}
+
+public void OnSubscriptionUpdated(string payload)
+{
+    Debug.Log("Subscription updated: " + payload);
+}
+```
 
 # Authentication and Headers
 
 > Depending on your authentication method, it is up to you to ensure that your authentication data and headers are set correctly.
 
+### Custom headers and auth tokens are natively supported in SimpleGraphQL. They can be passed in as parameters when calling `SubscribeAsync` or `SendAsync`.
+
+# Example Valid .graphql Files
+### GetScoreById.graphql
+```graphql
+# fully defined query
+query GetScoreById($user_id: String!, $level: String!) {
+    leaderboards_by_pk(level: $level, user_id: $user_id) {
+        user_id
+        level
+        score
+        metadata
+    }
+}
+```
+### GetScoresForLevel.graphql
+```graphql
+# anonymous query
+query ($level: String!) {
+    leaderboards(where: {level: {_eq: $level}}) {
+        user_id
+        level
+        score
+        metadata
+    }
+}
+```
+### MoreScoreStuff.graphql
+```graphql
+# you can have multiple queries in one file, and long as they are uniquely named
+
+mutation UpsertScore($user_id: String!, $level: String!, $score: bigint! $metadata: jsonb!) {
+    insert_leaderboards_one(object: {user_id: $user_id, level: $level, score: $score, metadata: $metadata}, on_conflict: {constraint: leaderboards_pkey, update_columns: score, where: {score: {_lt: $score}}}) {
+        user_id
+        score
+    }
+}
+
+subscription GetScoresForLevel($level: String!) {
+    leaderboards(where: {level: {_eq: $level}}) {
+        user_id
+        level
+        score
+        metadata
+    }
+}
+```
+
 # Things to Note
-TBA
+- During testing, we found that Unity's version of .NET occasionally has issues with HttpClient and WebSocket. If you find that you are having the same issues, please let us know. WebSocket is unavoidable for subscriptions, and Unity has no alternative like they do with UnityWebRequest.
+- WebSockets sometimes take extraordinarily long amounts of time to start up on the first call. This is has probably been fixed in a recent .NET version (but we don't have those fixes yet.)
 
 <!-- ## Auth with Hasura
 TBA -->
 
-<hr>
+# Wiki will be added soon
+
 More to be added soon
