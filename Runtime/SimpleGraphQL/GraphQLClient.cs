@@ -13,15 +13,15 @@ namespace SimpleGraphQL
     /// This API object is meant to be reused, so keep an instance of it somewhere!
     /// </summary>
     [PublicAPI]
-    public class GraphQL
+    public class GraphQLClient
     {
         public readonly List<Query> SearchableQueries;
         public readonly Dictionary<string, string> CustomHeaders;
-        
+
         public string Endpoint;
         public string AuthScheme;
 
-        public GraphQL(string endpoint, string authScheme = "Bearer", IEnumerable<Query> queries = null,
+        public GraphQLClient(string endpoint, string authScheme = "Bearer", IEnumerable<Query> queries = null,
             Dictionary<string, string> headers = null)
         {
             Endpoint = endpoint;
@@ -30,7 +30,7 @@ namespace SimpleGraphQL
             CustomHeaders = headers;
         }
 
-        public GraphQL(GraphQLConfig config)
+        public GraphQLClient(GraphQLConfig config)
         {
             Endpoint = config.Endpoint;
             AuthScheme = config.AuthScheme;
