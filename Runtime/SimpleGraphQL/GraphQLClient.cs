@@ -43,7 +43,7 @@ namespace SimpleGraphQL
         public async Task<string> SendAsync(
             Query query,
             string authToken = null,
-            Dictionary<string, string> variables = null,
+            Dictionary<string, object> variables = null,
             Dictionary<string, string> headers = null
         )
         {
@@ -63,7 +63,7 @@ namespace SimpleGraphQL
             Query query,
             string authScheme = "Bearer",
             string authToken = null,
-            Dictionary<string, string> variables = null,
+            Dictionary<string, object> variables = null,
             Dictionary<string, string> headers = null
         )
         {
@@ -122,19 +122,21 @@ namespace SimpleGraphQL
         /// <returns>True if successful</returns>
         public async Task<bool> SubscribeAsync(
             Query query,
+            string id,
             string authToken = null,
-            Dictionary<string, string> variables = null,
+            Dictionary<string, object> variables = null,
             Dictionary<string, string> headers = null
         )
         {
-            return await SubscribeAsync(query, AuthScheme, authToken, variables, headers);
+            return await SubscribeAsync(query, id, AuthScheme, authToken, variables, headers);
         }
 
         public async Task<bool> SubscribeAsync(
             Query query,
+            string id,
             string authScheme = "Bearer",
             string authToken = null,
-            Dictionary<string, string> variables = null,
+            Dictionary<string, object> variables = null,
             Dictionary<string, string> headers = null
         )
         {
@@ -160,14 +162,14 @@ namespace SimpleGraphQL
                 await HttpUtils.WebSocketConnect(Endpoint, authScheme, authToken, "graphql-ws", headers);
             }
 
-            return await HttpUtils.WebSocketSubscribe(query.ToString(), query, variables);
+            return await HttpUtils.WebSocketSubscribe(id, query, variables);
         }
 
         /// <summary>
         /// Unsubscribe from a query.
         /// </summary>
-        /// <param name="query"></param>
-        public async Task Unsubscribe(Query query)
+        /// <param name="id"></param>
+        public async Task Unsubscribe(string id)
         {
             if (!HttpUtils.IsWebSocketReady())
             {
@@ -175,7 +177,7 @@ namespace SimpleGraphQL
                 return;
             }
 
-            await HttpUtils.WebSocketUnsubscribe(query.ToString());
+            await HttpUtils.WebSocketUnsubscribe(id);
         }
 
         /// <summary>
