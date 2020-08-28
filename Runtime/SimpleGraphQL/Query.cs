@@ -46,7 +46,7 @@ namespace SimpleGraphQL
     {
         public static byte[] ToBytes(this Query query, Dictionary<string, object> variables = null)
         {
-            return Encoding.ASCII.GetBytes(ToJson(query, variables));
+            return Encoding.UTF8.GetBytes(ToJson(query, variables));
         }
 
         public static string ToJson(this Query query, Dictionary<string, object> variables = null,
