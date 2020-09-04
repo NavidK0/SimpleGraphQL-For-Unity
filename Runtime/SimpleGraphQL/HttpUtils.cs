@@ -116,7 +116,7 @@ namespace SimpleGraphQL
             _webSocket.Options.AddSubProtocol(protocol);
 
             if (authToken != null)
-                _webSocket.Options.SetRequestHeader("Authorization", $"{authScheme} {authToken}");
+                _webSocket.Options.SetRequestHeader("X-Authorization", $"{authScheme} {authToken}");
 
             _webSocket.Options.SetRequestHeader("Content-Type", "application/json");
 
