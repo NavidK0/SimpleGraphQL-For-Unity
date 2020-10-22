@@ -44,7 +44,7 @@ namespace SimpleGraphQL
             Query query,
             string authScheme = "Bearer",
             string authToken = null,
-            Dictionary<string, string> variables = null,
+            Dictionary<string, object> variables = null,
             Dictionary<string, string> headers = null
         )
         {
@@ -177,7 +177,7 @@ namespace SimpleGraphQL
         public static async Task<bool> WebSocketSubscribe(
             string id,
             Query query,
-            Dictionary<string, string> variables
+            Dictionary<string, object> variables
         )
         {
             if (!IsWebSocketReady())

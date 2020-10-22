@@ -43,7 +43,7 @@ namespace SimpleGraphQL
         public async Task<string> SendAsync(
             Query query,
             string authToken = null,
-            Dictionary<string, string> variables = null,
+            Dictionary<string, object> variables = null,
             Dictionary<string, string> headers = null
         )
         {
@@ -63,7 +63,7 @@ namespace SimpleGraphQL
             Query query,
             string authScheme = "Bearer",
             string authToken = null,
-            Dictionary<string, string> variables = null,
+            Dictionary<string, object> variables = null,
             Dictionary<string, string> headers = null
         )
         {
@@ -123,7 +123,7 @@ namespace SimpleGraphQL
         public async Task<bool> SubscribeAsync(
             Query query,
             string authToken = null,
-            Dictionary<string, string> variables = null,
+            Dictionary<string, object> variables = null,
             Dictionary<string, string> headers = null
         )
         {
@@ -134,7 +134,7 @@ namespace SimpleGraphQL
             Query query,
             string authScheme = "Bearer",
             string authToken = null,
-            Dictionary<string, string> variables = null,
+            Dictionary<string, object> variables = null,
             Dictionary<string, string> headers = null
         )
         {

@@ -76,7 +76,7 @@ public async void QueryOrMutation()
     string results = await graphQL.SendAsync(
         query,
         "authToken",
-        new Dictionary<string, string>
+        new Dictionary<string, object>
         {
             {"variable", "value"}
         }
@@ -98,7 +98,7 @@ public async void Subscribe()
     bool success = await graphQL.SubscribeAsync(
         query,
         "authToken",
-        new Dictionary<string, string>
+        new Dictionary<string, object>
         {
             {"variable", "value"}
         }
