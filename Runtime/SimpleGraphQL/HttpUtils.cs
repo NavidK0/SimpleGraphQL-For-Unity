@@ -42,10 +42,10 @@ namespace SimpleGraphQL
         public static async Task<string> PostQueryAsync(
             string url,
             Query query,
-            string authScheme = "Bearer",
-            string authToken = null,
             Dictionary<string, object> variables = null,
-            Dictionary<string, string> headers = null
+            Dictionary<string, string> headers = null,
+            string authToken = null,
+            string authScheme = null
         )
         {
             var uri = new Uri(url);
@@ -103,10 +103,10 @@ namespace SimpleGraphQL
         /// <returns></returns>
         public static async Task WebSocketConnect(
             string url,
-            string authScheme = "Bearer",
-            string authToken = null,
             string protocol = "graphql-ws",
-            Dictionary<string, string> headers = null
+            Dictionary<string, string> headers = null,
+            string authToken = null,
+            string authScheme = null
         )
         {
             url = url.Replace("http", "ws");

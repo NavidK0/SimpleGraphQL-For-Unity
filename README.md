@@ -75,16 +75,20 @@ public async void QueryOrMutation()
 
     string results = await graphQL.SendAsync(
         query,
-        "authToken",
         new Dictionary<string, object>
         {
             {"variable", "value"}
-        }
+        },
+        null,
+       "authToken",
+       "Bearer"
     );
 
     Debug.Log(results);
 }
 ```
+
+> NOTE: The code above is just an example, not all parameters are needed. Be sure to look at the optional parameters.
 
 ### Subscriptions
 ```cs
@@ -97,11 +101,13 @@ public async void Subscribe()
 
     bool success = await graphQL.SubscribeAsync(
         query,
-        "authToken",
         new Dictionary<string, object>
         {
             {"variable", "value"}
-        }
+        },
+        null,
+       "authToken",
+       "Bearer"
     );
     
     Debug.Log(success ? "Subscribed!" : "Subscribe failed!");
