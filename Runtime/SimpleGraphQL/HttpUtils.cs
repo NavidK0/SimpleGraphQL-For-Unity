@@ -136,7 +136,7 @@ namespace SimpleGraphQL
                 Debug.Log("Websocket is initting");
                 // Initialize the socket at the server side
                 await _webSocket.SendAsync(
-                    new ArraySegment<byte>(Encoding.ASCII.GetBytes(@"{""type"":""connection_init""}")),
+                    new ArraySegment<byte>(Encoding.UTF8.GetBytes(@"{""type"":""connection_init""}")),
                     WebSocketMessageType.Text,
                     true,
                     CancellationToken.None
@@ -206,7 +206,7 @@ namespace SimpleGraphQL
             );
 
             await _webSocket.SendAsync(
-                new ArraySegment<byte>(Encoding.ASCII.GetBytes(json)),
+                new ArraySegment<byte>(Encoding.UTF8.GetBytes(json)),
                 WebSocketMessageType.Text,
                 true,
                 CancellationToken.None
@@ -229,7 +229,7 @@ namespace SimpleGraphQL
             }
 
             await _webSocket.SendAsync(
-                new ArraySegment<byte>(Encoding.ASCII.GetBytes($@"{{""type"":""stop"",""id"":""{id}""}}")),
+                new ArraySegment<byte>(Encoding.UTF8.GetBytes($@"{{""type"":""stop"",""id"":""{id}""}}")),
                 WebSocketMessageType.Text,
                 true,
                 CancellationToken.None

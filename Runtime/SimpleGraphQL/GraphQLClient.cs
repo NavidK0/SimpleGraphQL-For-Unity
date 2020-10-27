@@ -176,6 +176,55 @@ namespace SimpleGraphQL
             return await HttpUtils.WebSocketSubscribe(query.ToString(), query, variables);
         }
 
+        /// <summary>
+        /// Subscribe to a query in GraphQL.
+        /// </summary>
+        /// <param name="query"></param>
+        /// <param name="id">A custom id to pass.</param>
+        /// <param name="variables"></param>
+        /// <param name="headers"></param>
+        /// <param name="authToken"></param>
+        /// <param name="authScheme"></param>
+        /// <returns>True if successful</returns>
+        public async Task<bool> Subscribe(
+            Query query,
+            string id,
+            Dictionary<string, object> variables = null,
+            Dictionary<string, string> headers = null,
+            string authToken = null,
+            string authScheme = null
+        )
+        {
+            if (query.OperationType != OperationType.Subscription)
+            {
+                Debug.LogError("Operation Type should be a subscription!");
+                return false;
+            }
+
+            if (CustomHeaders != null)
+            {
+                if (headers == null) headers = new Dictionary<string, string>();
+
+                foreach (KeyValuePair<string, string> header in CustomHeaders)
+                {
+                    headers.Add(header.Key, header.Value);
+                }
+            }
+
+            if (authScheme == null)
+            {
+                authScheme = AuthScheme;
+            }
+
+            if (!HttpUtils.IsWebSocketReady())
+            {
+                // Prepare the socket before continuing.
+                await HttpUtils.WebSocketConnect(Endpoint, "graphql-ws", headers, authToken, authScheme);
+            }
+
+            return await HttpUtils.WebSocketSubscribe(id, query, variables);
+        }
+
 
         /// <summary>
         /// Subscribe to a query in GraphQL.
@@ -211,6 +260,21 @@ namespace SimpleGraphQL
             }
 
             await HttpUtils.WebSocketUnsubscribe(query.ToString());
+        }
+
+        /// <summary>
+        /// Unsubscribe from a query.
+        /// </summary>
+        /// <param name="id"></param>
+        public async Task Unsubscribe(string id)
+        {
+            if (!HttpUtils.IsWebSocketReady())
+            {
+                // Socket is already apparently closed, so this wouldn't work anyways.
+                return;
+            }
+
+            await HttpUtils.WebSocketUnsubscribe(id);
         }
 
         /// <summary>
