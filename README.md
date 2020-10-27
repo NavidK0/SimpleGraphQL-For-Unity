@@ -42,7 +42,7 @@ This should work with all platforms (Mono/IL2CPP) except for WebGL, since Unity 
 If you are having trouble with a platform, please open an issue.
 
 ## Unity Version
-We're using this on Unity 2019.3.13f1. While it may work on older Unity versions, there is no strong guarantee because there have been many breaking API changes over the past couple of years, but also that some of the features being used here have not been backported. Your mileage may vary.
+We've tested this on Unity 2018.4 and higher. While it may work on older Unity versions, there is no strong guarantee because there have been many breaking API changes over the past couple of years, but also that some of the features being used here have not been backported. Your mileage may vary.
 
 # Quick Start
 
@@ -126,6 +126,43 @@ public async void Unsubscribe()
 public void OnSubscriptionUpdated(string payload)
 {
     Debug.Log("Subscription updated: " + payload);
+}
+```
+
+### Coroutines
+SimpleGraphQL includes a custom yield instruction for when you want to use coroutines.
+```cs
+/// <summary>
+/// Create a new WaitForSend Yield Instruction.
+/// </summary>
+/// <param name="sendFunc">The graphQL send function.</param>
+/// <param name="onComplete">The callback that will be invoked after the task is complete.</param>
+public WaitForSend(Func<Task<string>> sendFunc, Action<string> onComplete)
+```
+
+```cs
+private void Start()
+{
+    StartCoroutine(_CallQueryCoroutine());
+}
+
+public IEnumerator _CallQueryCoroutine() 
+{
+    yield return new WaitForSend(
+        graphQL.SendAsync(
+            query,
+            new Dictionary<string, object>
+            {
+                {"variable", "value"}
+            },
+        ), 
+        OnComplete
+    );
+}
+
+public void OnComplete(string result) 
+{
+    Debug.Log("GraphQL Result: " + result);
 }
 ```
 

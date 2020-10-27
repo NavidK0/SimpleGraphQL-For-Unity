@@ -1,17 +1,23 @@
 {
-    "name": "com.lastabyss.simplegraphql",
-    "version": "1.1.0",
-    "displayName": "SimpleGraphQL",
-    "description": "A simple graphQL client that allows one to use .graphql files for queries, mutations, and subscriptions with Unity.",
-    "unity": "2019.3",
-    "unityRelease": "13f1",
-    "keywords": [
-        "graphql",
-        "client"
-    ],
-    "author": {
-        "name": "Last Abyss Inc.",
-        "email": "contact@lastabyss.com",
-        "url": "https://lastabyss.com"
-    }
+  "name": "com.lastabyss.simplegraphql",
+  "version": "1.1.1",
+  "displayName": "SimpleGraphQL",
+  "description": "A simple graphQL client that allows one to use .graphql files for queries, mutations, and subscriptions with Unity.",
+  "unity": "2018.4",
+  "keywords": [
+    "graphql",
+    "client",
+    "async",
+    "await",
+    "asynchronous",
+    ".graphql",
+    "files",
+    "codebased",
+    "library"
+  ],
+  "author": {
+    "name": "Last Abyss Inc.",
+    "email": "contact@lastabyss.com",
+    "url": "https://lastabyss.com"
+  }
 }
