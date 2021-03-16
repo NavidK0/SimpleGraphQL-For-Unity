@@ -12,6 +12,12 @@ using UnityEngine.Networking;
 
 namespace SimpleGraphQL
 {
+    public enum SubscriptionError
+    {
+        SocketFailure,
+        InvalidPayload
+    }
+
     [PublicAPI]
     public static class HttpUtils
     {
@@ -20,7 +26,12 @@ namespace SimpleGraphQL
         /// <summary>
         /// Called when the websocket receives subscription data.
         /// </summary>
-        public static event Action<string> SubscriptionDataReceived;
+        internal static event Action<string> SubscriptionDataReceived;
+
+        /// <summary>
+        /// Called when the an error occurs during websocket operations.
+        /// </summary>
+        internal static event Action<SubscriptionError, string> SubscriptionErrorOccured;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         public static void PreInit()
@@ -48,24 +59,26 @@ namespace SimpleGraphQL
             Dictionary<string, string> headers = null
         )
         {
-            var uri = new Uri(url);
+            Uri uri = new Uri(url);
 
             byte[] payload = query.ToBytes(variables);
 
-            var request = new UnityWebRequest(uri, "POST")
+            UnityWebRequest request = new UnityWebRequest(uri, "POST")
             {
                 uploadHandler = new UploadHandlerRaw(payload),
                 downloadHandler = new DownloadHandlerBuffer()
             };
 
-            if (authToken != null)
+            if(authToken != null)
+            {
                 request.SetRequestHeader("Authorization", $"{authScheme} {authToken}");
+            }
 
             request.SetRequestHeader("Content-Type", "application/json");
 
-            if (headers != null)
+            if(headers != null)
             {
-                foreach (KeyValuePair<string, string> header in headers)
+                foreach(KeyValuePair<string, string> header in headers)
                 {
                     request.SetRequestHeader(header.Key, header.Value);
                 }
@@ -75,14 +88,14 @@ namespace SimpleGraphQL
             {
                 request.SendWebRequest();
 
-                while (!request.isDone)
+                while(!request.isDone)
                 {
                     await Task.Yield();
                 }
 
                 return request.downloadHandler.text;
             }
-            catch (Exception e)
+            catch(Exception e)
             {
                 Debug.LogError("[SimpleGraphQL] " + e);
                 return null;
@@ -101,7 +114,7 @@ namespace SimpleGraphQL
         /// <param name="headers"></param>
         /// <param name="protocol"></param>
         /// <returns></returns>
-        public static async Task WebSocketConnect(
+        public static async Task<bool> WebSocketConnect(
             string url,
             string authScheme = "Bearer",
             string authToken = null,
@@ -111,18 +124,20 @@ namespace SimpleGraphQL
         {
             url = url.Replace("http", "ws");
 
-            var uri = new Uri(url);
+            Uri uri = new Uri(url);
             _webSocket = new ClientWebSocket();
             _webSocket.Options.AddSubProtocol(protocol);
 
-            if (authToken != null)
+            if(authToken != null)
+            {
                 _webSocket.Options.SetRequestHeader("X-Authorization", $"{authScheme} {authToken}");
+            }
 
             _webSocket.Options.SetRequestHeader("Content-Type", "application/json");
 
-            if (headers != null)
+            if(headers != null)
             {
-                foreach (KeyValuePair<string, string> header in headers)
+                foreach(KeyValuePair<string, string> header in headers)
                 {
                     _webSocket.Options.SetRequestHeader(header.Key, header.Value);
                 }
@@ -145,10 +160,12 @@ namespace SimpleGraphQL
                 Debug.Log("Websocket is updating");
                 // Start listening to the websocket for data.
                 WebSocketUpdate();
+                return true;
             }
-            catch (Exception e)
+            catch(Exception e)
             {
                 Debug.LogError(e.Message);
+                return false;
             }
         }
 
@@ -158,7 +175,7 @@ namespace SimpleGraphQL
         /// <returns></returns>
         public static async Task WebSocketDisconnect()
         {
-            if (_webSocket?.State != WebSocketState.Open)
+            if(_webSocket?.State != WebSocketState.Open)
             {
                 Debug.LogError("Attempted to disconnect from a socket that was not open!");
                 return;
@@ -180,7 +197,7 @@ namespace SimpleGraphQL
             Dictionary<string, object> variables
         )
         {
-            if (!IsWebSocketReady())
+            if(!IsWebSocketReady())
             {
                 Debug.LogError("Attempted to subscribe to a query without connecting to a WebSocket first!");
                 return false;
@@ -205,14 +222,22 @@ namespace SimpleGraphQL
                 }
             );
 
-            await _webSocket.SendAsync(
-                new ArraySegment<byte>(Encoding.ASCII.GetBytes(json)),
-                WebSocketMessageType.Text,
-                true,
-                CancellationToken.None
-            );
+            try
+            {
+                await _webSocket.SendAsync(
+                    new ArraySegment<byte>(Encoding.ASCII.GetBytes(json)),
+                    WebSocketMessageType.Text,
+                    true,
+                    CancellationToken.None
+                );
 
-            return true;
+                return true;
+            }
+            catch(Exception e)
+            {
+                Debug.LogError($"Subscribe failed:\nSocket state: {_webSocket?.State.ToString() ?? "N/A"}\nClose status: {_webSocket?.CloseStatus?.ToString() ?? "N/A"}\nError message: {e.Message}");
+                return false;
+            }
         }
 
         /// <summary>
@@ -222,57 +247,78 @@ namespace SimpleGraphQL
         /// <returns></returns>
         public static async Task WebSocketUnsubscribe(string id)
         {
-            if (!IsWebSocketReady())
+            if(!IsWebSocketReady())
             {
                 Debug.LogError("Attempted to unsubscribe to a query without connecting to a WebSocket first!");
                 return;
             }
 
-            await _webSocket.SendAsync(
-                new ArraySegment<byte>(Encoding.ASCII.GetBytes($@"{{""type"":""stop"",""id"":""{id}""}}")),
-                WebSocketMessageType.Text,
-                true,
-                CancellationToken.None
-            );
+            try
+            {
+                await _webSocket.SendAsync(
+                    new ArraySegment<byte>(Encoding.ASCII.GetBytes($@"{{""type"":""stop"",""id"":""{id}""}}")),
+                    WebSocketMessageType.Text,
+                    true,
+                    CancellationToken.None
+                );
+            }
+            catch(Exception e)
+            {
+                Debug.LogError($"Unsubscribe failed:\nSocket state: {_webSocket?.State.ToString() ?? "N/A"}\nClose status: {_webSocket?.CloseStatus?.ToString() ?? "N/A"}\nError message: {e.Message}");
+            }
         }
 
         private static async void WebSocketUpdate()
         {
-            while (true)
+            while(true)
             {
                 ArraySegment<byte> buffer;
                 buffer = WebSocket.CreateClientBuffer(1024, 1024);
 
-                if (buffer.Array == null)
+                if(buffer.Array == null)
                 {
                     throw new WebSocketException("Buffer array is null!");
                 }
 
                 WebSocketReceiveResult wsReceiveResult;
-                var jsonBuild = new StringBuilder();
+                StringBuilder jsonBuild = new StringBuilder();
 
-                do
+                try
                 {
-                    wsReceiveResult = await _webSocket.ReceiveAsync(buffer, CancellationToken.None);
+                    do
+                    {
+                        wsReceiveResult = await _webSocket.ReceiveAsync(buffer, CancellationToken.None);
 
-                    jsonBuild.Append(Encoding.UTF8.GetString(buffer.Array, buffer.Offset, wsReceiveResult.Count));
-                } while (!wsReceiveResult.EndOfMessage);
+                        jsonBuild.Append(Encoding.UTF8.GetString(buffer.Array, buffer.Offset, wsReceiveResult.Count));
+                    } while(!wsReceiveResult.EndOfMessage);
+                }
+                catch(Exception e)
+                {
+                    Debug.LogError($"Socket failure:\n{e.Message}");
+                    SubscriptionErrorOccured?.Invoke(SubscriptionError.SocketFailure, e.ToString());
+                    break;
+                }
 
-                var jsonResult = jsonBuild.ToString();
-                if (jsonResult.IsNullOrEmpty()) return;
+                string jsonResult = jsonBuild.ToString();
+                if(string.IsNullOrEmpty(jsonResult))
+                {
+                    return;
+                }
 
                 JObject jsonObj;
                 try
                 {
                     jsonObj = JObject.Parse(jsonResult);
                 }
-                catch (JsonReaderException e)
+                catch(JsonReaderException e)
                 {
-                    throw new ApplicationException(e.Message);
+                    Debug.LogError($"Socket failure:\n{e.Message}");
+                    SubscriptionErrorOccured?.Invoke(SubscriptionError.InvalidPayload, e.ToString());
+                    break;
                 }
 
-                var subType = (string) jsonObj["type"];
-                switch (subType)
+                string subType = (string)jsonObj["type"];
+                switch(subType)
                 {
                     case "connection_error":
                     {
@@ -287,7 +333,7 @@ namespace SimpleGraphQL
                     {
                         JToken jToken = jsonObj["payload"];
 
-                        if (jToken != null)
+                        if(jToken != null)
                         {
                             SubscriptionDataReceived?.Invoke(jToken.ToString());
                         }
