@@ -4,15 +4,14 @@ using System.IO;
 using System.Linq;
 using SimpleGraphQL.GraphQLParser;
 using SimpleGraphQL.GraphQLParser.AST;
-using UnityEditor.Experimental.AssetImporters;
 using UnityEngine;
 
 namespace SimpleGraphQL
 {
-    [ScriptedImporter(1, "graphql")]
-    public class GraphQLImporterV1 : ScriptedImporter
+    [UnityEditor.AssetImporters.ScriptedImporter(1, "graphql")]
+    public class GraphQLImporterV1 : UnityEditor.AssetImporters.ScriptedImporter
     {
-        public override void OnImportAsset(AssetImportContext ctx)
+        public override void OnImportAsset(UnityEditor.AssetImporters.AssetImportContext ctx)
         {
             var lexer = new Lexer();
             var parser = new Parser(lexer);

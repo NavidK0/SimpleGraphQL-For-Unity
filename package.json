@@ -1,6 +1,6 @@
 {
   "name": "com.lastabyss.simplegraphql",
-  "version": "1.1.2",
+  "version": "1.1.3",
   "displayName": "SimpleGraphQL",
   "description": "A simple graphQL client that allows one to use .graphql files for queries, mutations, and subscriptions with Unity.",
   "unity": "2018.4",
@@ -19,5 +19,8 @@
     "name": "Last Abyss Inc.",
     "email": "contact@lastabyss.com",
     "url": "https://lastabyss.com"
+  },
+  "dependencies": {
+    "com.unity.nuget.newtonsoft-json": "2.0.0"
   }
 }
