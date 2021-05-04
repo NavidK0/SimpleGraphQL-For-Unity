@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
+using Newtonsoft.Json;
 using UnityEngine;
 
 namespace SimpleGraphQL
@@ -88,6 +89,18 @@ namespace SimpleGraphQL
             );
 
             return postQueryAsync;
+        }
+
+        public async Task<Response<TResponse>> Send<TResponse>(
+            Query query,
+            Dictionary<string, object> variables = null,
+            Dictionary<string, string> headers = null,
+            string authToken = null,
+            string authScheme = null
+            )
+        {
+            var json = await Send(query, variables, headers, authToken, authScheme);
+            return JsonConvert.DeserializeObject<Response<TResponse>>(json);
         }
 
         /// <summary>
