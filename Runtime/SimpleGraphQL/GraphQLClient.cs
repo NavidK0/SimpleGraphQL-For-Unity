@@ -103,6 +103,17 @@ namespace SimpleGraphQL
             return JsonConvert.DeserializeObject<Response<TResponse>>(json);
         }
 
+        public async Task<Response<TResponse>> Send<TResponse>(
+            Func<TResponse> responseTypeResolver,
+            Query query,
+            Dictionary<string, object> variables = null,
+            Dictionary<string, string> headers = null,
+            string authToken = null,
+            string authScheme = null)
+        {
+            return await Send<TResponse>(query, variables, headers, authToken, authScheme);
+        }
+
         /// <summary>
         /// Send a query!
         /// </summary>

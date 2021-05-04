@@ -46,7 +46,7 @@ namespace SimpleGraphQL
     public class Response<T>
     {
         [DataMember(Name = "data")]
-        public Dictionary<string, T> Data { get; set; }
+        public T Data { get; set; }
     }
 
     [PublicAPI]
