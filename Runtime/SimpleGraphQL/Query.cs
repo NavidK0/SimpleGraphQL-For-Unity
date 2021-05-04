@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Runtime.Serialization;
 using System.Text;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
@@ -40,13 +39,6 @@ namespace SimpleGraphQL
         {
             return $"{FileName}:{OperationName}:{OperationType}";
         }
-    }
-
-    [PublicAPI]
-    public class Response<T>
-    {
-        [DataMember(Name = "data")]
-        public T Data { get; set; }
     }
 
     [PublicAPI]
