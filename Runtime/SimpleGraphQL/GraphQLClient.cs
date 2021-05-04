@@ -244,7 +244,7 @@ namespace SimpleGraphQL
             string authScheme = null
         )
         {
-            return await Subscribe(query, variables, headers, authScheme, authScheme);
+            return await Subscribe(query, variables, headers, authToken, authScheme);
         }
 
         /// <summary>
