@@ -42,7 +42,7 @@ namespace SimpleGraphQL
         public static async Task<string> PostQueryAsync(
             string url,
             Query query,
-            Dictionary<string, object> variables = null,
+            object variables = null,
             Dictionary<string, string> headers = null,
             string authToken = null,
             string authScheme = null
@@ -177,7 +177,7 @@ namespace SimpleGraphQL
         public static async Task<bool> WebSocketSubscribe(
             string id,
             Query query,
-            Dictionary<string, object> variables
+            object variables
         )
         {
             if (!IsWebSocketReady())

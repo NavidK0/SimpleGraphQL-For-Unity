@@ -44,12 +44,12 @@ namespace SimpleGraphQL
     [PublicAPI]
     public static class QueryExtensions
     {
-        public static byte[] ToBytes(this Query query, Dictionary<string, object> variables = null)
+        public static byte[] ToBytes(this Query query, object variables = null)
         {
             return Encoding.UTF8.GetBytes(ToJson(query, variables));
         }
 
-        public static string ToJson(this Query query, Dictionary<string, object> variables = null,
+        public static string ToJson(this Query query, object variables = null,
             bool prettyPrint = false)
         {
             return JsonConvert.SerializeObject

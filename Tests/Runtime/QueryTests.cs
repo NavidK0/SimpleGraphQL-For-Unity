@@ -46,7 +46,7 @@ namespace SimpleGraphQL.Tests
         }
 
         [UnityTest]
-        public IEnumerator QueryWithArgs()
+        public IEnumerator QueryWithArgsDictionary()
         {
             var client = new GraphQLClient(Uri);
             var query = new Query
@@ -61,6 +61,31 @@ namespace SimpleGraphQL.Tests
                 {
                     {"code", "EU"}
                 }
+            );
+
+            yield return response.AsCoroutine();
+
+            Assert.IsNull(response.Result.Errors);
+
+            var data = response.Result.Data;
+            Assert.IsNotNull(data);
+            Assert.IsNotNull(data.continent);
+            Assert.AreEqual(data.continent.name, "Europe");
+        }
+
+        [UnityTest]
+        public IEnumerator QueryWithArgsObject()
+        {
+            var client = new GraphQLClient(Uri);
+            var query = new Query
+            {
+                Source = "query ContinentNameByCode($code: ID!) { continent(code: $code) { name } }"
+            };
+            var responseType = new { continent = new { name = "" } };
+            var response = client.Send(
+                () => responseType,
+                query,
+                new {code = "EU"}
             );
 
             yield return response.AsCoroutine();

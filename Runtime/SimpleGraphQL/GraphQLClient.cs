@@ -52,7 +52,7 @@ namespace SimpleGraphQL
         /// <returns></returns>
         public async Task<string> Send(
             Query query,
-            Dictionary<string, object> variables = null,
+            object variables = null,
             Dictionary<string, string> headers = null,
             string authToken = null,
             string authScheme = null
@@ -93,7 +93,7 @@ namespace SimpleGraphQL
 
         public async Task<Response<TResponse>> Send<TResponse>(
             Query query,
-            Dictionary<string, object> variables = null,
+            object variables = null,
             Dictionary<string, string> headers = null,
             string authToken = null,
             string authScheme = null
@@ -106,7 +106,7 @@ namespace SimpleGraphQL
         public async Task<Response<TResponse>> Send<TResponse>(
             Func<TResponse> responseTypeResolver,
             Query query,
-            Dictionary<string, object> variables = null,
+            object variables = null,
             Dictionary<string, string> headers = null,
             string authToken = null,
             string authScheme = null)
@@ -126,7 +126,7 @@ namespace SimpleGraphQL
         [Obsolete("SendAsync is deprecated, please use Send instead.")]
         public async Task<string> SendAsync(
             Query query,
-            Dictionary<string, object> variables = null,
+            object variables = null,
             Dictionary<string, string> headers = null,
             string authToken = null,
             string authScheme = null
@@ -164,7 +164,7 @@ namespace SimpleGraphQL
         /// <returns>True if successful</returns>
         public async Task<bool> Subscribe(
             Query query,
-            Dictionary<string, object> variables = null,
+            object variables = null,
             Dictionary<string, string> headers = null,
             string authToken = null,
             string authScheme = null
@@ -262,7 +262,7 @@ namespace SimpleGraphQL
         [Obsolete("SubscribeAsync is deprecated, please use Subscribe instead.")]
         public async Task<bool> SubscribeAsync(
             Query query,
-            Dictionary<string, object> variables = null,
+            object variables = null,
             Dictionary<string, string> headers = null,
             string authToken = null,
             string authScheme = null
