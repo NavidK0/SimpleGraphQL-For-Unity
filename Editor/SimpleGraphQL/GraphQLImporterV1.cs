@@ -2,16 +2,24 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using UnityEngine;
 using SimpleGraphQL.GraphQLParser;
 using SimpleGraphQL.GraphQLParser.AST;
-using UnityEngine;
+
+// ifdef for different unity versions
+#if UNITY_2020_2_OR_NEWER
+using UnityEditor.AssetImporters;
+
+#elif UNITY_2017_1_OR_NEWER
+using UnityEditor.Experimental.AssetImporters;
+#endif
 
 namespace SimpleGraphQL
 {
-    [UnityEditor.AssetImporters.ScriptedImporter(1, "graphql")]
-    public class GraphQLImporterV1 : UnityEditor.AssetImporters.ScriptedImporter
+    [ScriptedImporter(1, "graphql")]
+    public class GraphQLImporterV1 : ScriptedImporter
     {
-        public override void OnImportAsset(UnityEditor.AssetImporters.AssetImportContext ctx)
+        public override void OnImportAsset(AssetImportContext ctx)
         {
             var lexer = new Lexer();
             var parser = new Parser(lexer);
