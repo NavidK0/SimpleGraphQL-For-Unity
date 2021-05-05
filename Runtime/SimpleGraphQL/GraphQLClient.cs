@@ -108,7 +108,7 @@ namespace SimpleGraphQL
             string authScheme = null
         )
         {
-            return await Send(query, variables, headers, authScheme, authScheme);
+            return await Send(query, variables, headers, authToken, authScheme);
         }
 
         /// <summary>
@@ -244,7 +244,7 @@ namespace SimpleGraphQL
             string authScheme = null
         )
         {
-            return await Subscribe(query, variables, headers, authScheme, authScheme);
+            return await Subscribe(query, variables, headers, authToken, authScheme);
         }
 
         /// <summary>
