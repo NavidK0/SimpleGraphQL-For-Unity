@@ -46,7 +46,7 @@ namespace SimpleGraphQL
                     queryFile.Queries.Add(new Query
                     {
                         FileName = fileName,
-                        OperationName = operation.Name.Value,
+                        OperationName = operation.Name?.Value,
                         OperationType = operationType,
                         Source = contents
                     });
