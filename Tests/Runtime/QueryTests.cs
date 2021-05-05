@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 using UnityEngine.TestTools;
@@ -42,6 +43,34 @@ namespace SimpleGraphQL.Tests
             Assert.IsNotNull(errors);
             Assert.IsNotEmpty(errors);
             Assert.IsNotNull(errors[0].Message);
+        }
+
+        [UnityTest]
+        public IEnumerator QueryWithArgs()
+        {
+            var client = new GraphQLClient(Uri);
+            var query = new Query
+            {
+                Source = "query ContinentNameByCode($code: ID!) { continent(code: $code) { name } }"
+            };
+            var responseType = new { continent = new { name = "" } };
+            var response = client.Send(
+                () => responseType,
+                query,
+                new Dictionary<string, object>()
+                {
+                    {"code", "EU"}
+                }
+            );
+
+            yield return response.AsCoroutine();
+
+            Assert.IsNull(response.Result.Errors);
+
+            var data = response.Result.Data;
+            Assert.IsNotNull(data);
+            Assert.IsNotNull(data.continent);
+            Assert.AreEqual(data.continent.name, "Europe");
         }
     }
 }
