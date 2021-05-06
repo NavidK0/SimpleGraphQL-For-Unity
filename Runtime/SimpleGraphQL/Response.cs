@@ -1,5 +1,6 @@
 ﻿using System.Runtime.Serialization;
 using JetBrains.Annotations;
+using UnityEngine.Scripting;
 
 namespace SimpleGraphQL
 {
@@ -12,6 +13,11 @@ namespace SimpleGraphQL
         [DataMember(Name = "errors")]
         [CanBeNull]
         public Error[] Errors { get; set; }
+
+        [Preserve] // Ensures it survives code-stripping
+        public Response()
+        {
+        }
     }
 
     [PublicAPI]
@@ -27,6 +33,11 @@ namespace SimpleGraphQL
         [DataMember(Name = "path")]
         [CanBeNull]
         public object[] Path { get; set; } // Path objects can be either integers or strings
+
+        [Preserve] // Ensures it survives code-stripping
+        public Error()
+        {
+        }
     }
 
     [PublicAPI]
@@ -37,5 +48,10 @@ namespace SimpleGraphQL
 
         [DataMember(Name = "column")]
         public int Column { get; set; }
+
+        [Preserve] // Ensures it survives code-stripping
+        public Location()
+        {
+        }
     }
 }
