@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Utilities;
 using UnityEngine;
 
 namespace SimpleGraphQL
@@ -51,19 +52,12 @@ namespace SimpleGraphQL
         /// <param name="authScheme">The authScheme to be used.</param>
         /// <returns></returns>
         public async Task<string> Send(
-            Query query,
-            Dictionary<string, object> variables = null,
+            Request request,
             Dictionary<string, string> headers = null,
             string authToken = null,
             string authScheme = null
         )
         {
-            if (query.OperationType == OperationType.Subscription)
-            {
-                Debug.LogError("Operation Type should not be a subscription!");
-                return null;
-            }
-
             if (CustomHeaders != null)
             {
                 if (headers == null) headers = new Dictionary<string, string>();
@@ -79,10 +73,9 @@ namespace SimpleGraphQL
                 authScheme = AuthScheme;
             }
 
-            string postQueryAsync = await HttpUtils.PostQueryAsync(
+            string postQueryAsync = await HttpUtils.PostRequestAsync(
                 Endpoint,
-                query,
-                variables,
+                request,
                 headers,
                 authToken,
                 authScheme
@@ -92,26 +85,24 @@ namespace SimpleGraphQL
         }
 
         public async Task<Response<TResponse>> Send<TResponse>(
-            Query query,
-            Dictionary<string, object> variables = null,
+            Request request,
             Dictionary<string, string> headers = null,
             string authToken = null,
             string authScheme = null
             )
         {
-            var json = await Send(query, variables, headers, authToken, authScheme);
+            var json = await Send(request, headers, authToken, authScheme);
             return JsonConvert.DeserializeObject<Response<TResponse>>(json);
         }
 
         public async Task<Response<TResponse>> Send<TResponse>(
             Func<TResponse> responseTypeResolver,
-            Query query,
-            Dictionary<string, object> variables = null,
+            Request request,
             Dictionary<string, string> headers = null,
             string authToken = null,
             string authScheme = null)
         {
-            return await Send<TResponse>(query, variables, headers, authToken, authScheme);
+            return await Send<TResponse>(request, headers, authToken, authScheme);
         }
 
         /// <summary>
@@ -125,14 +116,13 @@ namespace SimpleGraphQL
         /// <returns></returns>
         [Obsolete("SendAsync is deprecated, please use Send instead.")]
         public async Task<string> SendAsync(
-            Query query,
-            Dictionary<string, object> variables = null,
+            Request request,
             Dictionary<string, string> headers = null,
             string authToken = null,
             string authScheme = null
         )
         {
-            return await Send(query, variables, headers, authToken, authScheme);
+            return await Send(request, headers, authToken, authScheme);
         }
 
         /// <summary>

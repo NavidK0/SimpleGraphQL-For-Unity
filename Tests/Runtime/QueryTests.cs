@@ -15,9 +15,9 @@ namespace SimpleGraphQL.Tests
         public IEnumerator SimpleQuery()
         {
             var client = new GraphQLClient(Uri);
-            var query = new Query { Source = "{ continents { name } }" };
+            var request = new Request { Query = "{ continents { name } }" };
             var responseType = new { continents = new [] { new { name = "" } } };
-            var response = client.Send(() => responseType, query);
+            var response = client.Send(() => responseType, request);
 
             yield return response.AsCoroutine();
 
@@ -33,7 +33,7 @@ namespace SimpleGraphQL.Tests
         public IEnumerator FailedQuery()
         {
             var client = new GraphQLClient(Uri);
-            var query = new Query { Source = "{ continents MALFORMED name } }" };
+            var query = new Request { Query = "{ continents MALFORMED name } }" };
             var responseType = new { continents = new [] { new { name = "" } } };
             var response = client.Send(() => responseType, query);
 
@@ -49,19 +49,16 @@ namespace SimpleGraphQL.Tests
         public IEnumerator QueryWithArgs()
         {
             var client = new GraphQLClient(Uri);
-            var query = new Query
+            var request = new Request
             {
-                Source = "query ContinentNameByCode($code: ID!) { continent(code: $code) { name } }"
+                Query = "query ContinentNameByCode($code: ID!) { continent(code: $code) { name } }",
+                Variables = new
+                {
+                    code = "EU"
+                }
             };
             var responseType = new { continent = new { name = "" } };
-            var response = client.Send(
-                () => responseType,
-                query,
-                new Dictionary<string, object>()
-                {
-                    {"code", "EU"}
-                }
-            );
+            var response = client.Send(() => responseType, request);
 
             yield return response.AsCoroutine();
 
