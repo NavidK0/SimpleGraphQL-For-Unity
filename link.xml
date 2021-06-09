@@ -1,0 +1,6 @@
+<linker>
+    <assembly fullname="LastAbyss.SimpleGraphQL.Runtime">
+        <type fullname="SimpleGraphQL.Response*" />
+        <type fullname="SimpleGraphQL.Request*" />
+    </assembly>
+</linker>
