@@ -33,16 +33,14 @@ namespace SimpleGraphQL
         /// POST a query to the given endpoint url.
         /// </summary>
         /// <param name="url">The endpoint url.</param>
-        /// <param name="query">The query</param>
+        /// <param name="request">The GraphQL request</param>
         /// <param name="authScheme">The authentication scheme to be used.</param>
         /// <param name="authToken">The actual auth token.</param>
-        /// <param name="variables">Any variables you want to pass in</param>
         /// <param name="headers">Any headers that should be passed in</param>
         /// <returns></returns>
-        public static async Task<string> PostQueryAsync(
+        public static async Task<string> PostRequestAsync(
             string url,
-            Query query,
-            Dictionary<string, object> variables = null,
+            Request request,
             Dictionary<string, string> headers = null,
             string authToken = null,
             string authScheme = null
@@ -50,37 +48,37 @@ namespace SimpleGraphQL
         {
             var uri = new Uri(url);
 
-            byte[] payload = query.ToBytes(variables);
+            byte[] payload = request.ToBytes();
 
-            var request = new UnityWebRequest(uri, "POST")
+            var webRequest = new UnityWebRequest(uri, "POST")
             {
                 uploadHandler = new UploadHandlerRaw(payload),
                 downloadHandler = new DownloadHandlerBuffer()
             };
 
             if (authToken != null)
-                request.SetRequestHeader("Authorization", $"{authScheme} {authToken}");
+                webRequest.SetRequestHeader("Authorization", $"{authScheme} {authToken}");
 
-            request.SetRequestHeader("Content-Type", "application/json");
+            webRequest.SetRequestHeader("Content-Type", "application/json");
 
             if (headers != null)
             {
                 foreach (KeyValuePair<string, string> header in headers)
                 {
-                    request.SetRequestHeader(header.Key, header.Value);
+                    webRequest.SetRequestHeader(header.Key, header.Value);
                 }
             }
 
             try
             {
-                request.SendWebRequest();
+                webRequest.SendWebRequest();
 
-                while (!request.isDone)
+                while (!webRequest.isDone)
                 {
                     await Task.Yield();
                 }
 
-                return request.downloadHandler.text;
+                return webRequest.downloadHandler.text;
             }
             catch (Exception e)
             {
