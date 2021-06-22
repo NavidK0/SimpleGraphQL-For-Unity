@@ -77,14 +77,19 @@ namespace SimpleGraphQL
                 {
                     await Task.Yield();
                 }
-
-                return webRequest.downloadHandler.text;
             }
             catch (Exception e)
             {
                 Debug.LogError("[SimpleGraphQL] " + e);
-                return null;
+                throw new UnityWebRequestException(webRequest);
             }
+
+            if (webRequest.result != UnityWebRequest.Result.Success)
+            {
+                throw new UnityWebRequestException(webRequest);
+            }
+
+            return webRequest.downloadHandler.text;
         }
 
         public static bool IsWebSocketReady() =>
