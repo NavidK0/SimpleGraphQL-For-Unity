@@ -37,15 +37,14 @@ That being said, this is intended to be a primarily code based package, so keep 
 
 # Supported Platforms
 
-| Platforms | Supported |
-| --------- | --------- |
-| Mono      | ✔         |
-| IL2CPP    | ✔         |
-| WebGL     | ❓         |
+| Platforms | Queries & Mutations | Subscriptions |
+| --------- | ------------------- | ------------- |
+| Mono      | ✔                  | ✔             |
+| IL2CPP    | ✔                  | ✔             |
+| WebGL     | ✔                  | ❌            |
 
-This should work with all platforms (Mono/IL2CPP) except for WebGL, since Unity WebGL has issues with multi-threading.
-If you are using WebGL, this package may be hit-or-miss for you at the present time. It makes use of UnityWebRequest
-where possible, but WebSockets are the main issue, so subscriptions will not properly work. If you do not need
+This should work with all platforms (Mono/IL2CPP) except for subscriptions on WebGL.
+It makes use of UnityWebRequest where possible, but C# WebSockets are the main issue, so subscriptions will not properly work. If you do not need
 subscriptions, WebGL will work just fine. Work may be added to support WebGL in the future, but for now, there is no
 support.
 
