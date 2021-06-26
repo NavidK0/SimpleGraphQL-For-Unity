@@ -2,5 +2,18 @@
     <assembly fullname="LastAbyss.SimpleGraphQL.Runtime">
         <type fullname="SimpleGraphQL.Response*" />
         <type fullname="SimpleGraphQL.Request*" />
+
+    </assembly>
+    <assembly fullname="Newtonsoft.Json">
+        <!-- https://github.com/jilleJr/Newtonsoft.Json-for-Unity/issues/54 -->
+        <type fullname="System.Runtime.CompilerServices.NullableAttribute"/>
+        <type fullname="System.Runtime.CompilerServices.NullableContextAttribute"/>
+
+        <!-- https://github.com/jilleJr/Newtonsoft.Json-for-Unity/issues/8 -->
+        <!-- https://github.com/jilleJr/Newtonsoft.Json-for-Unity/issues/65 -->
+        <type fullname="Newtonsoft.Json.Converters.*Converter" preserve="all" />
+
+        <!-- Not strictly needed, but these are quite commonly used in response types -->
+        <type fullname="Newtonsoft.Json.Serialization.*NamingStrategy" preserve="all" />
     </assembly>
 </linker>
