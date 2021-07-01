@@ -102,11 +102,10 @@ public async void QueryOrMutation()
     Query query = graphQL.FindQuery("FileName", "OperationName", OperationType.Query);
 
     string results = await graphQL.SendAsync(
-        query,
-        new Dictionary<string, object>
+        query.ToRequest(new Dictionary<string, object>
         {
             {"variable", "value"}
-        },
+        }),
         null,
        "authToken",
        "Bearer"
