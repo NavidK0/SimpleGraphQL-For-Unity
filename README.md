@@ -70,7 +70,24 @@ That's it.
 
 # Quick Start
 
-> SimpleGraphQL makes use of .graphql files that you must write yourself. It is up to you to make sure they are valid. Many IDEs support this function natively or through plugins.
+Simplest usage:
+
+```c#
+var client = new GraphQLClient("https://countries.trevorblades.com/";
+var request = new Request
+{
+    Query = "query ContinentNameByCode($code: ID!) { continent(code: $code) { name } }",
+    Variables = new
+    {
+        code = "EU"
+    }
+};
+var responseType = new { continent = new { name = "" } };
+var response = await client.Send(() => responseType, request);
+Debug.Log(response.Result.Data.continent.name);
+```
+
+SimpleGraphQL also lets you store queries in .graphql files that you must write yourself. It is up to you to make sure they are valid. Many IDEs support this function natively or through plugins.
 
 ## Configuration
 
