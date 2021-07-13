@@ -118,7 +118,7 @@ public async void QueryOrMutation()
     // or... mix and match between all three
     Query query = graphQL.FindQuery("FileName", "OperationName", OperationType.Query);
 
-    string results = await graphQL.SendAsync(
+    string results = await graphQL.Send(
         query.ToRequest(new Dictionary<string, object>
         {
             {"variable", "value"}
@@ -144,7 +144,7 @@ public async void Subscribe()
 
     graphQL.RegisterListener(OnSubscriptionUpdated);
 
-    bool success = await graphQL.SubscribeAsync(
+    bool success = await graphQL.Subscribe(
         query,
         new Dictionary<string, object>
         {
@@ -196,7 +196,7 @@ private void Start()
 public IEnumerator _CallQueryCoroutine() 
 {
     yield return new WaitForSend(
-        graphQL.SendAsync(
+        graphQL.Send(
             query,
             new Dictionary<string, object>
             {
@@ -217,7 +217,7 @@ public void OnComplete(string result)
 
 > Depending on your authentication method, it is up to you to ensure that your authentication data and headers are set correctly.
 
-### Custom headers and auth tokens are natively supported in SimpleGraphQL. They can be passed in as parameters when calling `SubscribeAsync` or `SendAsync`.
+### Custom headers and auth tokens are natively supported in SimpleGraphQL. They can be passed in as parameters when calling `Subscribe` or `Send`.
 
 # Example Valid .graphql Files
 
