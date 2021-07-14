@@ -73,7 +73,7 @@ That's it.
 Simplest usage:
 
 ```c#
-var client = new GraphQLClient("https://countries.trevorblades.com/";
+var client = new GraphQLClient("https://countries.trevorblades.com/");
 var request = new Request
 {
     Query = "query ContinentNameByCode($code: ID!) { continent(code: $code) { name } }",
@@ -145,11 +145,10 @@ public async void Subscribe()
     graphQL.RegisterListener(OnSubscriptionUpdated);
 
     bool success = await graphQL.Subscribe(
-        query,
-        new Dictionary<string, object>
+        query.ToRequest(new Dictionary<string, object>
         {
             {"variable", "value"}
-        },
+        }),
         null,
        "authToken",
        "Bearer"
@@ -163,7 +162,7 @@ public async void Unsubscribe()
     var graphQL = new GraphQLClient(Config);
     Query query = graphQL.FindQuery("SubscribeScoresForLevel");
 
-    await graphQL.Unsubscribe(query);
+    await graphQL.Unsubscribe(query.ToRequest());
     graphQL.UnregisterListener(OnSubscriptionUpdated);
     Debug.Log("Unsubscribed!");
 }
@@ -197,11 +196,7 @@ public IEnumerator _CallQueryCoroutine()
 {
     yield return new WaitForSend(
         graphQL.Send(
-            query,
-            new Dictionary<string, object>
-            {
-                {"variable", "value"}
-            },
+            request
         ), 
         OnComplete
     );
