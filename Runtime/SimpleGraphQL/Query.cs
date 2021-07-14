@@ -43,7 +43,7 @@ namespace SimpleGraphQL
     {
         public static Request ToRequest(this Query query, object variables = null)
         {
-            return new Request()
+            return new Request
             {
                 Query = query.Source,
                 Variables = variables,

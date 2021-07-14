@@ -17,8 +17,8 @@ namespace SimpleGraphQL.Tests
         public IEnumerator SimpleQuery()
         {
             var client = new GraphQLClient(Uri);
-            var request = new Request { Query = "{ continents { name } }" };
-            var responseType = new { continents = new [] { new { name = "" } } };
+            var request = new Request {Query = "{ continents { name } }"};
+            var responseType = new {continents = new[] {new {name = ""}}};
             var response = client.Send(() => responseType, request);
 
             yield return response.AsCoroutine();
@@ -35,8 +35,8 @@ namespace SimpleGraphQL.Tests
         public IEnumerator MalformedQuery()
         {
             var client = new GraphQLClient(Uri);
-            var query = new Request { Query = "{ continents MALFORMED name } }" };
-            var responseType = new { continents = new [] { new { name = "" } } };
+            var query = new Request {Query = "{ continents MALFORMED name } }"};
+            var responseType = new {continents = new[] {new {name = ""}}};
             var response = client.Send(() => responseType, query);
 
             yield return response.AsCoroutineUnchecked();
@@ -69,7 +69,7 @@ namespace SimpleGraphQL.Tests
                     code = "EU"
                 }
             };
-            var responseType = new { continent = new { name = "" } };
+            var responseType = new {continent = new {name = ""}};
             var response = client.Send(() => responseType, request);
 
             yield return response.AsCoroutine();
@@ -86,8 +86,8 @@ namespace SimpleGraphQL.Tests
         public IEnumerator NetworkError()
         {
             var client = new GraphQLClient("https://non_resolvable_host_123123123123123");
-            var request = new Request { Query = "{ continents { name } }" };
-            var responseType = new { continents = new [] { new { name = "" } } };
+            var request = new Request {Query = "{ continents { name } }"};
+            var responseType = new {continents = new[] {new {name = ""}}};
             var response = client.Send(() => responseType, request);
 
             yield return response.AsCoroutineUnchecked();
@@ -103,8 +103,8 @@ namespace SimpleGraphQL.Tests
         public IEnumerator Http404Error()
         {
             var client = new GraphQLClient("https://google.com/url_that_returns_404_lsdfksadjflksdafjs");
-            var request = new Request { Query = "{ continents { name } }" };
-            var responseType = new { continents = new [] { new { name = "" } } };
+            var request = new Request {Query = "{ continents { name } }"};
+            var responseType = new {continents = new[] {new {name = ""}}};
             var response = client.Send(() => responseType, request);
 
             yield return response.AsCoroutineUnchecked();

@@ -4,8 +4,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Utilities;
-using UnityEngine;
 
 namespace SimpleGraphQL
 {
@@ -45,8 +43,7 @@ namespace SimpleGraphQL
         /// <summary>
         /// Send a query!
         /// </summary>
-        /// <param name="query">The query you are sending. These should be generated from your graphQL files.</param>
-        /// <param name="variables">Any variables you want to pass</param>
+        /// <param name="request">The request you are sending.</param>
         /// <param name="headers">Any headers you want to pass</param>
         /// <param name="authToken">The authToken</param>
         /// <param name="authScheme">The authScheme to be used.</param>
@@ -73,7 +70,7 @@ namespace SimpleGraphQL
                 authScheme = AuthScheme;
             }
 
-            string postQueryAsync = await HttpUtils.PostRequestAsync(
+            string postQueryAsync = await HttpUtils.PostRequest(
                 Endpoint,
                 request,
                 headers,
@@ -89,9 +86,9 @@ namespace SimpleGraphQL
             Dictionary<string, string> headers = null,
             string authToken = null,
             string authScheme = null
-            )
+        )
         {
-            var json = await Send(request, headers, authToken, authScheme);
+            string json = await Send(request, headers, authToken, authScheme);
             return JsonConvert.DeserializeObject<Response<TResponse>>(json);
         }
 
@@ -103,26 +100,6 @@ namespace SimpleGraphQL
             string authScheme = null)
         {
             return await Send<TResponse>(request, headers, authToken, authScheme);
-        }
-
-        /// <summary>
-        /// Send a query!
-        /// </summary>
-        /// <param name="query">The query you are sending. These should be generated from your graphQL files.</param>
-        /// <param name="variables">Any variables you want to pass</param>
-        /// <param name="headers">Any headers you want to pass</param>
-        /// <param name="authToken">The authToken</param>
-        /// <param name="authScheme">The authScheme to be used.</param>
-        /// <returns></returns>
-        [Obsolete("SendAsync is deprecated, please use Send instead.")]
-        public async Task<string> SendAsync(
-            Request request,
-            Dictionary<string, string> headers = null,
-            string authToken = null,
-            string authScheme = null
-        )
-        {
-            return await Send(request, headers, authToken, authScheme);
         }
 
         /// <summary>
@@ -146,26 +123,18 @@ namespace SimpleGraphQL
         /// <summary>
         /// Subscribe to a query in GraphQL.
         /// </summary>
-        /// <param name="query"></param>
-        /// <param name="variables"></param>
+        /// <param name="request">The request you are sending.</param>
         /// <param name="headers"></param>
         /// <param name="authToken"></param>
         /// <param name="authScheme"></param>
         /// <returns>True if successful</returns>
         public async Task<bool> Subscribe(
-            Query query,
-            Dictionary<string, object> variables = null,
+            Request request,
             Dictionary<string, string> headers = null,
             string authToken = null,
             string authScheme = null
         )
         {
-            if (query.OperationType != OperationType.Subscription)
-            {
-                Debug.LogError("Operation Type should be a subscription!");
-                return false;
-            }
-
             if (CustomHeaders != null)
             {
                 if (headers == null) headers = new Dictionary<string, string>();
@@ -187,34 +156,26 @@ namespace SimpleGraphQL
                 await HttpUtils.WebSocketConnect(Endpoint, "graphql-ws", headers, authToken, authScheme);
             }
 
-            return await HttpUtils.WebSocketSubscribe(query.ToString(), query, variables);
+            return await HttpUtils.WebSocketSubscribe(request.Query.ToMurmur2Hash().ToString(), request);
         }
 
         /// <summary>
         /// Subscribe to a query in GraphQL.
         /// </summary>
-        /// <param name="query"></param>
         /// <param name="id">A custom id to pass.</param>
-        /// <param name="variables"></param>
+        /// <param name="request"></param>
         /// <param name="headers"></param>
         /// <param name="authToken"></param>
         /// <param name="authScheme"></param>
         /// <returns>True if successful</returns>
         public async Task<bool> Subscribe(
-            Query query,
             string id,
-            Dictionary<string, object> variables = null,
+            Request request,
             Dictionary<string, string> headers = null,
             string authToken = null,
             string authScheme = null
         )
         {
-            if (query.OperationType != OperationType.Subscription)
-            {
-                Debug.LogError("Operation Type should be a subscription!");
-                return false;
-            }
-
             if (CustomHeaders != null)
             {
                 if (headers == null) headers = new Dictionary<string, string>();
@@ -236,36 +197,15 @@ namespace SimpleGraphQL
                 await HttpUtils.WebSocketConnect(Endpoint, "graphql-ws", headers, authToken, authScheme);
             }
 
-            return await HttpUtils.WebSocketSubscribe(id, query, variables);
+            return await HttpUtils.WebSocketSubscribe(id, request);
         }
 
 
         /// <summary>
-        /// Subscribe to a query in GraphQL.
+        /// Unsubscribe from a request.
         /// </summary>
-        /// <param name="query"></param>
-        /// <param name="variables"></param>
-        /// <param name="headers"></param>
-        /// <param name="authToken"></param>
-        /// <param name="authScheme"></param>
-        /// <returns>True if successful</returns>
-        [Obsolete("SubscribeAsync is deprecated, please use Subscribe instead.")]
-        public async Task<bool> SubscribeAsync(
-            Query query,
-            Dictionary<string, object> variables = null,
-            Dictionary<string, string> headers = null,
-            string authToken = null,
-            string authScheme = null
-        )
-        {
-            return await Subscribe(query, variables, headers, authToken, authScheme);
-        }
-
-        /// <summary>
-        /// Unsubscribe from a query.
-        /// </summary>
-        /// <param name="query"></param>
-        public async Task Unsubscribe(Query query)
+        /// <param name="request"></param>
+        public async Task Unsubscribe(Request request)
         {
             if (!HttpUtils.IsWebSocketReady())
             {
@@ -273,11 +213,11 @@ namespace SimpleGraphQL
                 return;
             }
 
-            await HttpUtils.WebSocketUnsubscribe(query.ToString());
+            await HttpUtils.WebSocketUnsubscribe(request.Query.ToMurmur2Hash().ToString());
         }
 
         /// <summary>
-        /// Unsubscribe from a query.
+        /// Unsubscribe from an id.
         /// </summary>
         /// <param name="id"></param>
         public async Task Unsubscribe(string id)

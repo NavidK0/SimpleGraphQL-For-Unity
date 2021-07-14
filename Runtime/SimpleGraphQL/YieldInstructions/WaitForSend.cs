@@ -19,10 +19,10 @@ namespace SimpleGraphQL.YieldInstructions
         /// <param name="onComplete">The callback that will be invoked after the task is complete.</param>
         public WaitForSend(Func<Task<string>> sendFunc, Action<string> onComplete)
         {
-            Task.Run(() => RunSendAsync(sendFunc, onComplete));
+            Task.Run(() => RunSend(sendFunc, onComplete));
         }
 
-        private async Task<string> RunSendAsync(Func<Task<string>> func, Action<string> onComplete)
+        private async Task<string> RunSend(Func<Task<string>> func, Action<string> onComplete)
         {
             string result = await func.Invoke();
             _taskDone = true;

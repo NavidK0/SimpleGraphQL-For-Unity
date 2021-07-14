@@ -38,7 +38,7 @@ namespace SimpleGraphQL
         /// <param name="authToken">The actual auth token.</param>
         /// <param name="headers">Any headers that should be passed in</param>
         /// <returns></returns>
-        public static async Task<string> PostRequestAsync(
+        public static async Task<string> PostRequest(
             string url,
             Request request,
             Dictionary<string, string> headers = null,
@@ -136,7 +136,7 @@ namespace SimpleGraphQL
                 Debug.Log("Websocket is connecting");
                 await _webSocket.ConnectAsync(uri, CancellationToken.None);
 
-                Debug.Log("Websocket is initting");
+                Debug.Log("Websocket is starting");
                 // Initialize the socket at the server side
                 await _webSocket.SendAsync(
                     new ArraySegment<byte>(Encoding.UTF8.GetBytes(@"{""type"":""connection_init""}")),
@@ -174,14 +174,9 @@ namespace SimpleGraphQL
         /// Subscribe to a query.
         /// </summary>
         /// <param name="id">Used to identify the subscription. Must be unique per query.</param>
-        /// <param name="query">The subscription query.</param>
-        /// <param name="variables"></param>
+        /// <param name="request">The subscription query.</param>
         /// <returns>true if successful</returns>
-        public static async Task<bool> WebSocketSubscribe(
-            string id,
-            Query query,
-            Dictionary<string, object> variables
-        )
+        public static async Task<bool> WebSocketSubscribe(string id, Request request)
         {
             if (!IsWebSocketReady())
             {
@@ -196,13 +191,13 @@ namespace SimpleGraphQL
                     type = "start",
                     payload = new
                     {
-                        query = query.Source,
-                        variables,
-                        operationName = query.OperationName
+                        query = request.Query,
+                        request.Variables,
+                        operationName = request.OperationName
                     }
                 },
                 Formatting.None,
-                new JsonSerializerSettings()
+                new JsonSerializerSettings
                 {
                     NullValueHandling = NullValueHandling.Ignore
                 }
@@ -299,7 +294,7 @@ namespace SimpleGraphQL
                     }
                     case "error":
                     {
-                        throw new WebSocketException("Handshake error Error: " + jsonResult);
+                        throw new WebSocketException("Handshake error. Error: " + jsonResult);
                     }
                     case "complete":
                     {
