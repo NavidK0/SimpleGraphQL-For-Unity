@@ -30,6 +30,15 @@ namespace SimpleGraphQL
         }
 
         /// <summary>
+        /// If the WebSocket needs to be disposed and reset.
+        /// </summary>
+        public static void Dispose()
+        {
+            _webSocket?.Dispose();
+            _webSocket = null;
+        }
+
+        /// <summary>
         /// POST a query to the given endpoint url.
         /// </summary>
         /// <param name="url">The endpoint url.</param>
@@ -50,46 +59,50 @@ namespace SimpleGraphQL
 
             byte[] payload = request.ToBytes();
 
-            var webRequest = new UnityWebRequest(uri, "POST")
+            using (var webRequest = new UnityWebRequest(uri, "POST")
             {
                 uploadHandler = new UploadHandlerRaw(payload),
-                downloadHandler = new DownloadHandlerBuffer()
-            };
-
-            if (authToken != null)
-                webRequest.SetRequestHeader("Authorization", $"{authScheme} {authToken}");
-
-            webRequest.SetRequestHeader("Content-Type", "application/json");
-
-            if (headers != null)
+                downloadHandler = new DownloadHandlerBuffer(),
+                disposeCertificateHandlerOnDispose = true,
+                disposeDownloadHandlerOnDispose = true,
+                disposeUploadHandlerOnDispose = true
+            })
             {
-                foreach (KeyValuePair<string, string> header in headers)
+                if (authToken != null)
+                    webRequest.SetRequestHeader("Authorization", $"{authScheme} {authToken}");
+
+                webRequest.SetRequestHeader("Content-Type", "application/json");
+
+                if (headers != null)
                 {
-                    webRequest.SetRequestHeader(header.Key, header.Value);
+                    foreach (KeyValuePair<string, string> header in headers)
+                    {
+                        webRequest.SetRequestHeader(header.Key, header.Value);
+                    }
                 }
-            }
 
-            try
-            {
-                webRequest.SendWebRequest();
-
-                while (!webRequest.isDone)
+                try
                 {
-                    await Task.Yield();
+                    webRequest.SendWebRequest();
+
+                    while (!webRequest.isDone)
+                    {
+                        await Task.Yield();
+                    }
                 }
-            }
-            catch (Exception e)
-            {
-                Debug.LogError("[SimpleGraphQL] " + e);
-                throw new UnityWebRequestException(webRequest);
-            }
+                catch (Exception e)
+                {
+                    Debug.LogError("[SimpleGraphQL] " + e);
+                    throw new UnityWebRequestException(webRequest);
+                }
 
-            if (webRequest.result != UnityWebRequest.Result.Success)
-            {
-                throw new UnityWebRequestException(webRequest);
-            }
+                if (webRequest.result != UnityWebRequest.Result.Success)
+                {
+                    throw new UnityWebRequestException(webRequest);
+                }
 
-            return webRequest.downloadHandler.text;
+                return webRequest.downloadHandler.text;
+            }
         }
 
         public static bool IsWebSocketReady() =>

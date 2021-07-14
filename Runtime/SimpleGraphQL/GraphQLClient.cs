@@ -9,12 +9,14 @@ namespace SimpleGraphQL
 {
     /// <summary>
     /// This API object is meant to be reused, so keep an instance of it somewhere!
+    /// Multiple GraphQLClients can be used with different configs based on needs.
     /// </summary>
     [PublicAPI]
     public class GraphQLClient
     {
         public readonly List<Query> SearchableQueries;
         public readonly Dictionary<string, string> CustomHeaders;
+
         public string Endpoint;
         public string AuthScheme;
 
@@ -38,7 +40,6 @@ namespace SimpleGraphQL
             CustomHeaders = config.CustomHeaders.ToDictionary(header => header.Key, header => header.Value);
             AuthScheme = config.AuthScheme;
         }
-
 
         /// <summary>
         /// Send a query!
