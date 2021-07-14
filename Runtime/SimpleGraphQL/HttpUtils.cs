@@ -192,7 +192,7 @@ namespace SimpleGraphQL
                     payload = new
                     {
                         query = request.Query,
-                        request.Variables,
+                        variables = request.Variables,
                         operationName = request.OperationName
                     }
                 },
