@@ -52,9 +52,9 @@ If you are having trouble with a platform, please open an issue.
 
 ## Unity Version
 
-We've tested this on Unity 2018.4 and higher (up to 2020.3 LTS). While it may work on older Unity versions, there is no
+We've tested this on Unity 2019.4 and higher (up to 2021.1). While it may work on older Unity versions, there is no
 strong guarantee because there have been many breaking API changes over the past couple of years, but also that some of
-the features being used here have not been backported. Your mileage may vary.
+the features being used here may have not been backported. Your mileage may vary.
 
 # Installation
 

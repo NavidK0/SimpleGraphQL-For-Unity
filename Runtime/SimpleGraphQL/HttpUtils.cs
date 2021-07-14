@@ -30,7 +30,7 @@ namespace SimpleGraphQL
         }
 
         /// <summary>
-        /// If the WebSocket needs to be disposed and reset.
+        /// For when the WebSocket needs to be disposed and reset.
         /// </summary>
         public static void Dispose()
         {
@@ -96,10 +96,17 @@ namespace SimpleGraphQL
                     throw new UnityWebRequestException(webRequest);
                 }
 
+#if UNITY_2020_2_OR_NEWER
                 if (webRequest.result != UnityWebRequest.Result.Success)
                 {
                     throw new UnityWebRequestException(webRequest);
                 }
+#elif UNITY_2019_4
+                if (webRequest.isNetworkError || webRequest.isHttpError)
+                {
+                    throw new UnityWebRequestException(webRequest);
+                }
+#endif
 
                 return webRequest.downloadHandler.text;
             }

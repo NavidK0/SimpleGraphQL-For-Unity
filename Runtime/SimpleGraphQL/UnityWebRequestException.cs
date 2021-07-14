@@ -57,6 +57,7 @@ namespace SimpleGraphQL
 #endif
             Error = unityWebRequest.error;
             ResponseCode = unityWebRequest.responseCode;
+
             if (UnityWebRequest.downloadHandler != null)
             {
                 if (unityWebRequest.downloadHandler is DownloadHandlerBuffer dhb)
