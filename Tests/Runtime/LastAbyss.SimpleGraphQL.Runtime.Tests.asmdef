@@ -1,5 +1,5 @@
 {
-    "name": "Tests",
+    "name": "LastAbyss.SimpleGraphQL.Runtime.Tests",
     "rootNamespace": "SimpleGraphQL.Tests",
     "references": [
         "UnityEngine.TestRunner",
