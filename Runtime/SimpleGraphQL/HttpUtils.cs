@@ -126,10 +126,10 @@ namespace SimpleGraphQL
         /// <returns></returns>
         public static async Task WebSocketConnect(
             string url,
-            string protocol = "graphql-ws",
             Dictionary<string, string> headers = null,
             string authToken = null,
-            string authScheme = null
+            string authScheme = null,
+            string protocol = "graphql-ws"
         )
         {
             url = url.Replace("http", "ws");

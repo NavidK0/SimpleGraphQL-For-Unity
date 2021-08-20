@@ -156,7 +156,7 @@ namespace SimpleGraphQL
             if (!HttpUtils.IsWebSocketReady())
             {
                 // Prepare the socket before continuing.
-                await HttpUtils.WebSocketConnect(Endpoint, protocol, headers, authToken, authScheme);
+                await HttpUtils.WebSocketConnect(Endpoint, headers, authToken, authScheme, protocol);
             }
 
             return await HttpUtils.WebSocketSubscribe(request.Query.ToMurmur2Hash().ToString(), request);
@@ -199,7 +199,7 @@ namespace SimpleGraphQL
             if (!HttpUtils.IsWebSocketReady())
             {
                 // Prepare the socket before continuing.
-                await HttpUtils.WebSocketConnect(Endpoint, protocol, headers, authToken, authScheme);
+                await HttpUtils.WebSocketConnect(Endpoint, headers, authToken, authScheme, protocol);
             }
 
             return await HttpUtils.WebSocketSubscribe(id, request);
