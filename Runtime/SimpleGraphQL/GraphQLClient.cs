@@ -128,12 +128,14 @@ namespace SimpleGraphQL
         /// <param name="headers"></param>
         /// <param name="authToken"></param>
         /// <param name="authScheme"></param>
+        /// <param name="protocol"></param>
         /// <returns>True if successful</returns>
         public async Task<bool> Subscribe(
             Request request,
             Dictionary<string, string> headers = null,
             string authToken = null,
-            string authScheme = null
+            string authScheme = null,
+            string protocol = "graphql-ws"
         )
         {
             if (CustomHeaders != null)
@@ -154,7 +156,7 @@ namespace SimpleGraphQL
             if (!HttpUtils.IsWebSocketReady())
             {
                 // Prepare the socket before continuing.
-                await HttpUtils.WebSocketConnect(Endpoint, "graphql-ws", headers, authToken, authScheme);
+                await HttpUtils.WebSocketConnect(Endpoint, protocol, headers, authToken, authScheme);
             }
 
             return await HttpUtils.WebSocketSubscribe(request.Query.ToMurmur2Hash().ToString(), request);
@@ -168,13 +170,15 @@ namespace SimpleGraphQL
         /// <param name="headers"></param>
         /// <param name="authToken"></param>
         /// <param name="authScheme"></param>
+        /// <param name="protocol"></param>
         /// <returns>True if successful</returns>
         public async Task<bool> Subscribe(
             string id,
             Request request,
             Dictionary<string, string> headers = null,
             string authToken = null,
-            string authScheme = null
+            string authScheme = null,
+            string protocol = "graphql-ws"
         )
         {
             if (CustomHeaders != null)
@@ -195,7 +199,7 @@ namespace SimpleGraphQL
             if (!HttpUtils.IsWebSocketReady())
             {
                 // Prepare the socket before continuing.
-                await HttpUtils.WebSocketConnect(Endpoint, "graphql-ws", headers, authToken, authScheme);
+                await HttpUtils.WebSocketConnect(Endpoint, protocol, headers, authToken, authScheme);
             }
 
             return await HttpUtils.WebSocketSubscribe(id, request);

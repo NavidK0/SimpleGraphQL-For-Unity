@@ -289,8 +289,8 @@ namespace SimpleGraphQL
                     throw new ApplicationException(e.Message);
                 }
 
-                var subType = (string) jsonObj["type"];
-                switch (subType)
+                var msgType = (string) jsonObj["type"];
+                switch (msgType)
                 {
                     case "connection_error":
                     {
@@ -302,6 +302,7 @@ namespace SimpleGraphQL
                         continue;
                     }
                     case "data":
+                    case "next":
                     {
                         JToken jToken = jsonObj["payload"];
 
@@ -329,6 +330,16 @@ namespace SimpleGraphQL
                     case "subscription_fail":
                     {
                         throw new WebSocketException("Subscription failed. Error: " + jsonResult);
+                    }
+                    case "ping":
+                    {
+                        await _webSocket.SendAsync(
+                            new ArraySegment<byte>(Encoding.UTF8.GetBytes($@"{{""type"":""pong""}}")),
+                            WebSocketMessageType.Text,
+                            true,
+                            CancellationToken.None
+                        );
+                        continue;
                     }
                 }
 
