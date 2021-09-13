@@ -159,7 +159,9 @@ namespace SimpleGraphQL
                 Debug.Log("Websocket is starting");
                 // Initialize the socket at the server side
                 await _webSocket.SendAsync(
-                    new ArraySegment<byte>(Encoding.UTF8.GetBytes(@"{""type"":""connection_init""}")),
+                    new ArraySegment<byte>(
+                        Encoding.UTF8.GetBytes(@"{""type"":""connection_init"",""payload"": ""{}""}")
+                    ),
                     WebSocketMessageType.Text,
                     true,
                     CancellationToken.None
@@ -289,7 +291,7 @@ namespace SimpleGraphQL
                     throw new ApplicationException(e.Message);
                 }
 
-                var msgType = (string) jsonObj["type"];
+                var msgType = (string)jsonObj["type"];
                 switch (msgType)
                 {
                     case "connection_error":
