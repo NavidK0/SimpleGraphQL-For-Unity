@@ -160,7 +160,7 @@ namespace SimpleGraphQL
                 // Initialize the socket at the server side
                 await _webSocket.SendAsync(
                     new ArraySegment<byte>(
-                        Encoding.UTF8.GetBytes(@"{""type"":""connection_init"",""payload"": ""{}""}")
+                        Encoding.UTF8.GetBytes(@"{""type"":""connection_init"",""payload"": {}}")
                     ),
                     WebSocketMessageType.Text,
                     true,
