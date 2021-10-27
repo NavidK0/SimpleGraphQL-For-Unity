@@ -10,7 +10,8 @@ namespace SimpleGraphQL
     {
         int IOrderedCallback.callbackOrder => 0;
 
-        string IUnityLinkerProcessor.GenerateAdditionalLinkXmlFile(BuildReport report, UnityLinkerBuildPipelineData data)
+        string IUnityLinkerProcessor.GenerateAdditionalLinkXmlFile(BuildReport report,
+            UnityLinkerBuildPipelineData data)
         {
             // This is pretty ugly, but it was the only thing I could think of in order to reliably get the path to link.xml
             const string linkXmlGuid = "9bbe747a148f00540828ab8521feb770";
@@ -21,6 +22,7 @@ namespace SimpleGraphQL
             return Path.GetFullPath(assetPath);
         }
 
+#if !UNITY_2021_2_OR_NEWER
         void IUnityLinkerProcessor.OnBeforeRun(BuildReport report, UnityLinkerBuildPipelineData data)
         {
         }
@@ -28,5 +30,6 @@ namespace SimpleGraphQL
         void IUnityLinkerProcessor.OnAfterRun(BuildReport report, UnityLinkerBuildPipelineData data)
         {
         }
+#endif
     }
 }
