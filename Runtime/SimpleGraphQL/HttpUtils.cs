@@ -182,6 +182,13 @@ namespace SimpleGraphQL
             }
 
             await _webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Socket closed.", CancellationToken.None);
+            ClearWebSocket();
+        }
+
+        private static void ClearWebSocket()
+        {
+            _webSocket?.Dispose();
+            _webSocket = null;
         }
 
         /// <summary>
@@ -295,6 +302,7 @@ namespace SimpleGraphQL
                 catch(Exception e)
                 {
                     Debug.LogError($"Socket failure:\n{e.Message}");
+                    ClearWebSocket();
                     SubscriptionErrorOccured?.Invoke(SubscriptionError.SocketFailure, e.ToString());
                     break;
                 }
@@ -313,6 +321,7 @@ namespace SimpleGraphQL
                 catch(JsonReaderException e)
                 {
                     Debug.LogError($"Socket failure:\n{e.Message}");
+                    await WebSocketDisconnect();
                     SubscriptionErrorOccured?.Invoke(SubscriptionError.InvalidPayload, e.ToString());
                     break;
                 }
