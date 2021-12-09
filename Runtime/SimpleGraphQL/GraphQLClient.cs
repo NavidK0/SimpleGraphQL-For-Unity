@@ -134,10 +134,11 @@ namespace SimpleGraphQL
             string id,
             string authToken = null,
             Dictionary<string, object> variables = null,
-            Dictionary<string, string> headers = null
+            Dictionary<string, string> headers = null,
+            HttpUtils.IWebSocket ws = null
         )
         {
-            return await SubscribeAsync(query, id, AuthScheme, authToken, variables, headers);
+            return await SubscribeAsync(query, id, AuthScheme, authToken, variables, headers, ws);
         }
 
         public async Task<bool> SubscribeAsync(
@@ -146,7 +147,8 @@ namespace SimpleGraphQL
             string authScheme = "Bearer",
             string authToken = null,
             Dictionary<string, object> variables = null,
-            Dictionary<string, string> headers = null
+            Dictionary<string, string> headers = null,
+            HttpUtils.IWebSocket ws = null
         )
         {
             if(query.OperationType != OperationType.Subscription)
@@ -171,7 +173,7 @@ namespace SimpleGraphQL
             if(!HttpUtils.IsWebSocketReady())
             {
                 // Prepare the socket before continuing.
-                bool connectionSuccessful = await HttpUtils.WebSocketConnect(Endpoint, authScheme, authToken, "graphql-ws", headers);
+                bool connectionSuccessful = await HttpUtils.WebSocketConnect(Endpoint, authScheme, authToken, "graphql-ws", headers, ws);
                 if(!connectionSuccessful)
                 {
                     return false;

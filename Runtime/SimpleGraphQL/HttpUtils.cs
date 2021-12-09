@@ -21,7 +21,90 @@ namespace SimpleGraphQL
     [PublicAPI]
     public static class HttpUtils
     {
-        private static ClientWebSocket _webSocket;
+        public interface IWebSocket : IDisposable
+        {
+            public interface ISocketOptions
+            {
+                public void AddSubProtocol(string protocol);
+
+                public void SetRequestHeader(string v1, string v2);
+            }
+
+            WebSocketState State { get; }
+            ISocketOptions Options { get; }
+            WebSocketCloseStatus? CloseStatus { get; }
+
+            Task ConnectAsync(Uri uri, CancellationToken none);
+            Task SendAsync(ArraySegment<byte> arraySegment, WebSocketMessageType text, bool v, CancellationToken ct);
+            Task CloseAsync(WebSocketCloseStatus normalClosure, string v, CancellationToken ct);
+            Task<WebSocketReceiveResult> ReceiveAsync(ArraySegment<byte> buffer, CancellationToken ct);
+        }
+
+
+        public class ClientWebSocketOptionsWrapper : IWebSocket.ISocketOptions
+        {
+            ClientWebSocketOptions o;
+
+            public ClientWebSocketOptionsWrapper(ClientWebSocketOptions o_)
+            {
+                o = o_;
+            }
+
+            public void AddSubProtocol(string protocol)
+            {
+                o.AddSubProtocol(protocol);
+            }
+
+            public void SetRequestHeader(string v1, string v2)
+            {
+                o.SetRequestHeader(v1, v2);
+            }
+        }
+
+
+        public class ClientWebSocketWrapper : IWebSocket
+        {
+            ClientWebSocket ws;
+
+            public ClientWebSocketWrapper()
+            {
+                ws = new ClientWebSocket();
+            }
+
+            WebSocketState IWebSocket.State => ws.State;
+
+            public WebSocketCloseStatus? CloseStatus => ws.CloseStatus;
+
+            public IWebSocket.ISocketOptions Options => new ClientWebSocketOptionsWrapper(ws.Options);
+
+
+            public Task ConnectAsync(Uri uri, CancellationToken ct)
+            {
+                return ws.ConnectAsync(uri, ct);
+            }
+
+            public Task SendAsync(ArraySegment<byte> arraySegment, WebSocketMessageType text, bool v, CancellationToken ct)
+            {
+                return ws.SendAsync(arraySegment, text, v, ct);
+            }
+
+            public Task CloseAsync(WebSocketCloseStatus normalClosure, string v, CancellationToken ct)
+            {
+                return ws.CloseAsync(normalClosure, v, ct);
+            }
+
+            public Task<WebSocketReceiveResult> ReceiveAsync(ArraySegment<byte> buffer, CancellationToken ct)
+            {
+                return ws.ReceiveAsync(buffer, ct);
+            }
+
+            public void Dispose()
+            {
+                ws.Dispose();
+            }
+        }
+
+        private static IWebSocket _webSocket;
 
         /// <summary>
         /// Called when the websocket receives subscription data.
@@ -119,13 +202,20 @@ namespace SimpleGraphQL
             string authScheme = "Bearer",
             string authToken = null,
             string protocol = "graphql-ws",
-            Dictionary<string, string> headers = null
+            Dictionary<string, string> headers = null,
+            IWebSocket ws = null
         )
         {
             url = url.Replace("http", "ws");
 
             Uri uri = new Uri(url);
-            _webSocket = new ClientWebSocket();
+            if (ws != null) {
+                _webSocket = ws;
+            }
+            else
+            {
+                _webSocket = new ClientWebSocketWrapper();
+            }
             _webSocket.Options.AddSubProtocol(protocol);
 
             if(authToken != null)
