@@ -140,18 +140,23 @@ namespace SimpleGraphQL
             _webSocket = new ClientWebSocket();
             _webSocket.Options.AddSubProtocol(protocol);
 
-            var payload = protocol == 'graphql-transport-ws' ? new {Authorization = null, "content-type", "application/json"} : new {};
+            var payload = new Dictionary<string, string>();
+
+            if(protocol == "graphql-transport-ws") {
+              payload["content-type"] = "application/json";
+            } else {
+              _webSocket.Options.SetRequestHeader("Content-Type", "application/json");
+            }
 
             if (authToken != null) {
-                if(protocol == 'graphql-transport-ws') {
+                if(protocol == "graphql-transport-ws") {
                     // set Authorization as payload
-                    payload.Authorization = $"{authScheme} {authToken}";
+                    payload["Authorization"] = $"{authScheme} {authToken}";
                 } else {
                     _webSocket.Options.SetRequestHeader("Authorization", $"{authScheme} {authToken}");
                 }
             }
 
-            _webSocket.Options.SetRequestHeader("Content-Type", "application/json");
 
             if (headers != null)
             {
@@ -335,7 +340,7 @@ namespace SimpleGraphQL
                         if (jToken != null)
                         {
                             SubscriptionDataReceived?.Invoke(jToken.ToString());
-                            SubscriptionDataReceived?[id]?.Invoke(jToken.ToString());
+                            SubscriptionDataReceivedPerChannel?[id]?.Invoke(jToken.ToString());
                         }
 
                         continue;
