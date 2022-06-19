@@ -21,12 +21,14 @@ namespace SimpleGraphQL
         /// Called when the websocket receives subscription data.
         /// </summary>
         public static event Action<string> SubscriptionDataReceived;
+        public static Dictionary<string, Action<string>> SubscriptionDataReceivedPerChannel;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         public static void PreInit()
         {
             _webSocket?.Dispose();
             SubscriptionDataReceived = null;
+            SubscriptionDataReceivedPerChannel = new Dictionary<string, Action<string>>();
         }
 
         /// <summary>
@@ -138,8 +140,16 @@ namespace SimpleGraphQL
             _webSocket = new ClientWebSocket();
             _webSocket.Options.AddSubProtocol(protocol);
 
-            if (authToken != null)
-                _webSocket.Options.SetRequestHeader("Authorization", $"{authScheme} {authToken}");
+            var payload = protocol == 'graphql-transport-ws' ? new {Authorization = null, "content-type", "application/json"} : new {};
+
+            if (authToken != null) {
+                if(protocol == 'graphql-transport-ws') {
+                    // set Authorization as payload
+                    payload.Authorization = $"{authScheme} {authToken}";
+                } else {
+                    _webSocket.Options.SetRequestHeader("Authorization", $"{authScheme} {authToken}");
+                }
+            }
 
             _webSocket.Options.SetRequestHeader("Content-Type", "application/json");
 
@@ -156,12 +166,23 @@ namespace SimpleGraphQL
                 Debug.Log("Websocket is connecting");
                 await _webSocket.ConnectAsync(uri, CancellationToken.None);
 
+                var json = JsonConvert.SerializeObject(
+                    new
+                    {
+                        type = "connection_init",
+                        payload = payload
+                    },
+                    Formatting.None,
+                    new JsonSerializerSettings
+                    {
+                        NullValueHandling = NullValueHandling.Ignore
+                    }
+                );
+
                 Debug.Log("Websocket is starting");
                 // Initialize the socket at the server side
                 await _webSocket.SendAsync(
-                    new ArraySegment<byte>(
-                        Encoding.UTF8.GetBytes(@"{""type"":""connection_init"",""payload"": {}}")
-                    ),
+                    new ArraySegment<byte>(Encoding.UTF8.GetBytes(json)),
                     WebSocketMessageType.Text,
                     true,
                     CancellationToken.None
@@ -210,7 +231,7 @@ namespace SimpleGraphQL
                 new
                 {
                     id,
-                    type = "start",
+                    type = _webSocket.SubProtocol == "graphql-transport-ws" ? "subscribe" : "start",
                     payload = new
                     {
                         query = request.Query,
@@ -248,8 +269,10 @@ namespace SimpleGraphQL
                 return;
             }
 
+            var type = _webSocket.SubProtocol == "graphql-transport-ws" ? "complete" : "stop";
+
             await _webSocket.SendAsync(
-                new ArraySegment<byte>(Encoding.UTF8.GetBytes($@"{{""type"":""stop"",""id"":""{id}""}}")),
+                new ArraySegment<byte>(Encoding.UTF8.GetBytes($@"{{""type"":""{type}"",""id"":""{id}""}}")),
                 WebSocketMessageType.Text,
                 true,
                 CancellationToken.None
@@ -292,6 +315,7 @@ namespace SimpleGraphQL
                 }
 
                 var msgType = (string)jsonObj["type"];
+                var id = (string)jsonObj["id"];
                 switch (msgType)
                 {
                     case "connection_error":
@@ -300,7 +324,7 @@ namespace SimpleGraphQL
                     }
                     case "connection_ack":
                     {
-                        Debug.Log("Websocket connection acknowledged.");
+                        Debug.Log($"Websocket connection acknowledged ({id}).");
                         continue;
                     }
                     case "data":
@@ -311,6 +335,7 @@ namespace SimpleGraphQL
                         if (jToken != null)
                         {
                             SubscriptionDataReceived?.Invoke(jToken.ToString());
+                            SubscriptionDataReceived?[id]?.Invoke(jToken.ToString());
                         }
 
                         continue;

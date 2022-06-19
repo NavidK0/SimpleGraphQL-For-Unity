@@ -112,6 +112,19 @@ namespace SimpleGraphQL
             HttpUtils.SubscriptionDataReceived += listener;
         }
 
+        public void RegisterListener(string id, Action<string> listener)
+        {
+            if(!HttpUtils.SubscriptionDataReceivedPerChannel.ContainsKey(id)) {
+              HttpUtils.SubscriptionDataReceivedPerChannel[id] = null;
+            }
+            HttpUtils.SubscriptionDataReceivedPerChannel[id] += listener;
+        }
+
+        public void RegisterListener(Request request, Action<string> listener)
+        {
+            RegisterListener(request.Query.ToMurmur2Hash().ToString(), listener);
+        }
+
         /// <summary>
         /// Unregisters a listener for subscriptions.
         /// </summary>
@@ -119,6 +132,18 @@ namespace SimpleGraphQL
         public void UnregisterListener(Action<string> listener)
         {
             HttpUtils.SubscriptionDataReceived -= listener;
+        }
+
+        public void UnregisterListener(string id, Action<string> listener)
+        {
+            if(HttpUtils.SubscriptionDataReceivedPerChannel.ContainsKey(id)) {
+              HttpUtils.SubscriptionDataReceivedPerChannel[id] -= listener;
+            }
+        }
+
+        public void UnregisterListener(Request request, Action<string> listener)
+        {
+            UnregisterListener(request.Query.ToMurmur2Hash().ToString(), listener);
         }
 
         /// <summary>
