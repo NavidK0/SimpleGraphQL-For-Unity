@@ -45,6 +45,7 @@ namespace SimpleGraphQL
         /// Send a query!
         /// </summary>
         /// <param name="request">The request you are sending.</param>
+        /// <param name="serializerSettings"></param>
         /// <param name="headers">Any headers you want to pass</param>
         /// <param name="authToken">The authToken</param>
         /// <param name="authScheme">The authScheme to be used.</param>
@@ -118,9 +119,11 @@ namespace SimpleGraphQL
 
         public void RegisterListener(string id, Action<string> listener)
         {
-            if(!HttpUtils.SubscriptionDataReceivedPerChannel.ContainsKey(id)) {
-              HttpUtils.SubscriptionDataReceivedPerChannel[id] = null;
+            if (!HttpUtils.SubscriptionDataReceivedPerChannel.ContainsKey(id))
+            {
+                HttpUtils.SubscriptionDataReceivedPerChannel[id] = null;
             }
+
             HttpUtils.SubscriptionDataReceivedPerChannel[id] += listener;
         }
 
@@ -140,8 +143,9 @@ namespace SimpleGraphQL
 
         public void UnregisterListener(string id, Action<string> listener)
         {
-            if(HttpUtils.SubscriptionDataReceivedPerChannel.ContainsKey(id)) {
-              HttpUtils.SubscriptionDataReceivedPerChannel[id] -= listener;
+            if (HttpUtils.SubscriptionDataReceivedPerChannel.ContainsKey(id))
+            {
+                HttpUtils.SubscriptionDataReceivedPerChannel[id] -= listener;
             }
         }
 

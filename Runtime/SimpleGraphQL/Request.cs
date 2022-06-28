@@ -26,21 +26,24 @@ namespace SimpleGraphQL
     [PublicAPI]
     public static class RequestExtensions
     {
-        private static JsonSerializerSettings defaultSerializerSettings = new JsonSerializerSettings {NullValueHandling = NullValueHandling.Ignore};
+        private static JsonSerializerSettings defaultSerializerSettings = new JsonSerializerSettings
+            { NullValueHandling = NullValueHandling.Ignore };
+
         public static byte[] ToBytes(this Request request, JsonSerializerSettings serializerSettings = null)
         {
             return Encoding.UTF8.GetBytes(request.ToJson(false, serializerSettings));
         }
 
-        public static string ToJson(this Request request, bool prettyPrint = false, JsonSerializerSettings serializerSettings = null)
+        public static string ToJson(this Request request, bool prettyPrint = false,
+            JsonSerializerSettings serializerSettings = null)
         {
             if (serializerSettings == null)
             {
                 serializerSettings = defaultSerializerSettings;
             }
-            
+
             return JsonConvert.SerializeObject
-            (   request,
+            (request,
                 prettyPrint ? Formatting.Indented : Formatting.None,
                 serializerSettings
             );

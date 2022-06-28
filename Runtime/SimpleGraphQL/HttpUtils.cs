@@ -21,6 +21,7 @@ namespace SimpleGraphQL
         /// Called when the websocket receives subscription data.
         /// </summary>
         public static event Action<string> SubscriptionDataReceived;
+
         public static Dictionary<string, Action<string>> SubscriptionDataReceivedPerChannel;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -47,6 +48,7 @@ namespace SimpleGraphQL
         /// <param name="request">The GraphQL request</param>
         /// <param name="authScheme">The authentication scheme to be used.</param>
         /// <param name="authToken">The actual auth token.</param>
+        /// <param name="serializerSettings"></param>
         /// <param name="headers">Any headers that should be passed in</param>
         /// <returns></returns>
         public static async Task<string> PostRequest(
@@ -63,13 +65,13 @@ namespace SimpleGraphQL
             byte[] payload = request.ToBytes(serializerSettings);
 
             using (var webRequest = new UnityWebRequest(uri, "POST")
-            {
-                uploadHandler = new UploadHandlerRaw(payload),
-                downloadHandler = new DownloadHandlerBuffer(),
-                disposeCertificateHandlerOnDispose = true,
-                disposeDownloadHandlerOnDispose = true,
-                disposeUploadHandlerOnDispose = true
-            })
+                   {
+                       uploadHandler = new UploadHandlerRaw(payload),
+                       downloadHandler = new DownloadHandlerBuffer(),
+                       disposeCertificateHandlerOnDispose = true,
+                       disposeDownloadHandlerOnDispose = true,
+                       disposeUploadHandlerOnDispose = true
+                   })
             {
                 if (authToken != null)
                     webRequest.SetRequestHeader("Authorization", $"{authScheme} {authToken}");
@@ -143,17 +145,24 @@ namespace SimpleGraphQL
 
             var payload = new Dictionary<string, string>();
 
-            if(protocol == "graphql-transport-ws") {
-              payload["content-type"] = "application/json";
-            } else {
-              _webSocket.Options.SetRequestHeader("Content-Type", "application/json");
+            if (protocol == "graphql-transport-ws")
+            {
+                payload["content-type"] = "application/json";
+            }
+            else
+            {
+                _webSocket.Options.SetRequestHeader("Content-Type", "application/json");
             }
 
-            if (authToken != null) {
-                if(protocol == "graphql-transport-ws") {
+            if (authToken != null)
+            {
+                if (protocol == "graphql-transport-ws")
+                {
                     // set Authorization as payload
                     payload["Authorization"] = $"{authScheme} {authToken}";
-                } else {
+                }
+                else
+                {
                     _webSocket.Options.SetRequestHeader("Authorization", $"{authScheme} {authToken}");
                 }
             }
@@ -172,7 +181,7 @@ namespace SimpleGraphQL
                 Debug.Log("Websocket is connecting");
                 await _webSocket.ConnectAsync(uri, CancellationToken.None);
 
-                var json = JsonConvert.SerializeObject(
+                string json = JsonConvert.SerializeObject(
                     new
                     {
                         type = "connection_init",
@@ -275,7 +284,7 @@ namespace SimpleGraphQL
                 return;
             }
 
-            var type = _webSocket.SubProtocol == "graphql-transport-ws" ? "complete" : "stop";
+            string type = _webSocket.SubProtocol == "graphql-transport-ws" ? "complete" : "stop";
 
             await _webSocket.SendAsync(
                 new ArraySegment<byte>(Encoding.UTF8.GetBytes($@"{{""type"":""{type}"",""id"":""{id}""}}")),
@@ -289,8 +298,7 @@ namespace SimpleGraphQL
         {
             while (true)
             {
-                ArraySegment<byte> buffer;
-                buffer = WebSocket.CreateClientBuffer(1024, 1024);
+                ArraySegment<byte> buffer = WebSocket.CreateClientBuffer(1024, 1024);
 
                 if (buffer.Array == null)
                 {
@@ -341,7 +349,11 @@ namespace SimpleGraphQL
                         if (jToken != null)
                         {
                             SubscriptionDataReceived?.Invoke(jToken.ToString());
-                            SubscriptionDataReceivedPerChannel?[id]?.Invoke(jToken.ToString());
+
+                            if (id != null)
+                            {
+                                SubscriptionDataReceivedPerChannel?[id]?.Invoke(jToken.ToString());
+                            }
                         }
 
                         continue;

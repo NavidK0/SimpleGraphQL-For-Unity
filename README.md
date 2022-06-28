@@ -44,7 +44,8 @@ That being said, this is intended to be a primarily code based package, so keep 
 | WebGL     | ✔                  | ❌            |
 
 This should work with all platforms (Mono/IL2CPP) except for subscriptions on WebGL.
-It makes use of UnityWebRequest where possible, but C# WebSockets are the main issue, so subscriptions will not properly work. If you do not need
+It makes use of UnityWebRequest where possible, but C# WebSockets are the main issue, so subscriptions will not properly
+work. If you do not need
 subscriptions, WebGL will work just fine. Work may be added to support WebGL in the future, but for now, there is no
 support.
 
@@ -87,7 +88,8 @@ var response = await client.Send(() => responseType, request);
 Debug.Log(response.Result.Data.continent.name);
 ```
 
-SimpleGraphQL also lets you store queries in .graphql files that you must write yourself. It is up to you to make sure they are valid. Many IDEs support this function natively or through plugins.
+SimpleGraphQL also lets you store queries in .graphql files that you must write yourself. It is up to you to make sure
+they are valid. Many IDEs support this function natively or through plugins.
 
 ## Configuration
 
@@ -210,7 +212,8 @@ public void OnComplete(string result)
 
 # Authentication and Headers
 
-> Depending on your authentication method, it is up to you to ensure that your authentication data and headers are set correctly.
+> Depending on your authentication method, it is up to you to ensure that your authentication data and headers are set
+> correctly.
 
 ### Custom headers and auth tokens are natively supported in SimpleGraphQL. They can be passed in as parameters when calling `Subscribe` or `Send`.
 
@@ -256,7 +259,7 @@ mutation UpsertScore($user_id: String!, $level: String!, $score: bigint! $metada
     }
 }
 
-subscription GetScoresForLevel($level: String!) {
+query ListLevelScores($level: String!) {
     leaderboards(where: {level: {_eq: $level}}) {
         user_id
         level
@@ -265,6 +268,31 @@ subscription GetScoresForLevel($level: String!) {
     }
 }
 ```
+
+### Subscriptions.graphql
+
+```graphql
+subscription OnScoresUpdated($level: String!) {
+    leaderboards(where: {level: {_eq: $level}}) {
+        user_id
+        level
+        score
+        metadata
+    }
+}
+
+subscription OnAnyScoresUpdated {
+    leaderboards {
+        user_id
+        level
+        score
+        metadata
+    }
+}
+```
+
+> NOTE: We recommend putting graphQL subscriptions in a separate file. Mixing queries, mutations, and subscriptions
+> together in one file may lead to odd/undocumented behavior on various servers.
 
 # Things to Note
 
