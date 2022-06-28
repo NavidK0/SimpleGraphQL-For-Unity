@@ -51,6 +51,7 @@ namespace SimpleGraphQL
         /// <returns></returns>
         public async Task<string> Send(
             Request request,
+            JsonSerializerSettings serializerSettings = null,
             Dictionary<string, string> headers = null,
             string authToken = null,
             string authScheme = null
@@ -74,6 +75,7 @@ namespace SimpleGraphQL
             string postQueryAsync = await HttpUtils.PostRequest(
                 Endpoint,
                 request,
+                serializerSettings,
                 headers,
                 authToken,
                 authScheme
@@ -84,23 +86,25 @@ namespace SimpleGraphQL
 
         public async Task<Response<TResponse>> Send<TResponse>(
             Request request,
+            JsonSerializerSettings serializerSettings = null,
             Dictionary<string, string> headers = null,
             string authToken = null,
             string authScheme = null
         )
         {
-            string json = await Send(request, headers, authToken, authScheme);
+            string json = await Send(request, serializerSettings, headers, authToken, authScheme);
             return JsonConvert.DeserializeObject<Response<TResponse>>(json);
         }
 
         public async Task<Response<TResponse>> Send<TResponse>(
             Func<TResponse> responseTypeResolver,
             Request request,
+            JsonSerializerSettings serializerSettings = null,
             Dictionary<string, string> headers = null,
             string authToken = null,
             string authScheme = null)
         {
-            return await Send<TResponse>(request, headers, authToken, authScheme);
+            return await Send<TResponse>(request, serializerSettings, headers, authToken, authScheme);
         }
 
         /// <summary>
