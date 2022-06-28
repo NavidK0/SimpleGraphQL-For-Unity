@@ -52,6 +52,7 @@ namespace SimpleGraphQL
         public static async Task<string> PostRequest(
             string url,
             Request request,
+            JsonSerializerSettings serializerSettings = null,
             Dictionary<string, string> headers = null,
             string authToken = null,
             string authScheme = null
@@ -59,7 +60,7 @@ namespace SimpleGraphQL
         {
             var uri = new Uri(url);
 
-            byte[] payload = request.ToBytes();
+            byte[] payload = request.ToBytes(serializerSettings);
 
             using (var webRequest = new UnityWebRequest(uri, "POST")
             {
