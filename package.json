@@ -1,6 +1,6 @@
 {
   "name": "com.lastabyss.simplegraphql",
-  "version": "1.4.0",
+  "version": "2.0.0",
   "displayName": "SimpleGraphQL",
   "description": "A simple graphQL client that allows one to use .graphql files (or code) for queries, mutations, and subscriptions with Unity.",
   "unity": "2019.4",
