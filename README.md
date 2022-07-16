@@ -126,6 +126,7 @@ public async void QueryOrMutation()
             {"variable", "value"}
         }),
         null,
+        null,
        "authToken",
        "Bearer"
     );
