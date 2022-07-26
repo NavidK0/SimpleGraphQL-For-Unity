@@ -65,13 +65,13 @@ namespace SimpleGraphQL
             byte[] payload = request.ToBytes(serializerSettings);
 
             using (var webRequest = new UnityWebRequest(uri, "POST")
-                   {
-                       uploadHandler = new UploadHandlerRaw(payload),
-                       downloadHandler = new DownloadHandlerBuffer(),
-                       disposeCertificateHandlerOnDispose = true,
-                       disposeDownloadHandlerOnDispose = true,
-                       disposeUploadHandlerOnDispose = true
-                   })
+            {
+                uploadHandler = new UploadHandlerRaw(payload),
+                downloadHandler = new DownloadHandlerBuffer(),
+                disposeCertificateHandlerOnDispose = true,
+                disposeDownloadHandlerOnDispose = true,
+                disposeUploadHandlerOnDispose = true
+            })
             {
                 if (authToken != null)
                     webRequest.SetRequestHeader("Authorization", $"{authScheme} {authToken}");
@@ -226,6 +226,7 @@ namespace SimpleGraphQL
             }
 
             await _webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Socket closed.", CancellationToken.None);
+            Dispose();
         }
 
         /// <summary>
@@ -298,6 +299,13 @@ namespace SimpleGraphQL
         {
             while (true)
             {
+                // break the loop as soon as the websocket was closed
+                if (!IsWebSocketReady())
+                {
+                    Debug.Log("websocket was closed, stop the loop");
+                    break;
+                }
+
                 ArraySegment<byte> buffer = WebSocket.CreateClientBuffer(1024, 1024);
 
                 if (buffer.Array == null)
@@ -333,59 +341,59 @@ namespace SimpleGraphQL
                 switch (msgType)
                 {
                     case "connection_error":
-                    {
-                        throw new WebSocketException("Connection error. Error: " + jsonResult);
-                    }
+                        {
+                            throw new WebSocketException("Connection error. Error: " + jsonResult);
+                        }
                     case "connection_ack":
-                    {
-                        Debug.Log($"Websocket connection acknowledged ({id}).");
-                        continue;
-                    }
+                        {
+                            Debug.Log($"Websocket connection acknowledged ({id}).");
+                            continue;
+                        }
                     case "data":
                     case "next":
-                    {
-                        JToken jToken = jsonObj["payload"];
-
-                        if (jToken != null)
                         {
-                            SubscriptionDataReceived?.Invoke(jToken.ToString());
+                            JToken jToken = jsonObj["payload"];
 
-                            if (id != null)
+                            if (jToken != null)
                             {
-                                SubscriptionDataReceivedPerChannel?[id]?.Invoke(jToken.ToString());
-                            }
-                        }
+                                SubscriptionDataReceived?.Invoke(jToken.ToString());
 
-                        continue;
-                    }
+                                if (id != null)
+                                {
+                                    SubscriptionDataReceivedPerChannel?[id]?.Invoke(jToken.ToString());
+                                }
+                            }
+
+                            continue;
+                        }
                     case "error":
-                    {
-                        throw new WebSocketException("Handshake error. Error: " + jsonResult);
-                    }
+                        {
+                            throw new WebSocketException("Handshake error. Error: " + jsonResult);
+                        }
                     case "complete":
-                    {
-                        Debug.Log("Server sent complete, it's done sending data.");
-                        break;
-                    }
+                        {
+                            Debug.Log("Server sent complete, it's done sending data.");
+                            continue;
+                        }
                     case "ka":
-                    {
-                        // stayin' alive, stayin' alive
-                        continue;
-                    }
+                        {
+                            // stayin' alive, stayin' alive
+                            continue;
+                        }
                     case "subscription_fail":
-                    {
-                        throw new WebSocketException("Subscription failed. Error: " + jsonResult);
-                    }
+                        {
+                            throw new WebSocketException("Subscription failed. Error: " + jsonResult);
+                        }
                     case "ping":
-                    {
-                        await _webSocket.SendAsync(
-                            new ArraySegment<byte>(Encoding.UTF8.GetBytes($@"{{""type"":""pong""}}")),
-                            WebSocketMessageType.Text,
-                            true,
-                            CancellationToken.None
-                        );
-                        continue;
-                    }
+                        {
+                            await _webSocket.SendAsync(
+                                new ArraySegment<byte>(Encoding.UTF8.GetBytes($@"{{""type"":""pong""}}")),
+                                WebSocketMessageType.Text,
+                                true,
+                                CancellationToken.None
+                            );
+                            continue;
+                        }
                 }
 
                 break;
