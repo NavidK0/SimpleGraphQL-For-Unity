@@ -22,7 +22,7 @@ namespace SimpleGraphQL
         public string AuthScheme;
 
         // track the running subscriptions ids
-        HashSet<string> RunningSubscriptions;
+        internal HashSet<string> RunningSubscriptions;
 
         public GraphQLClient(
             string endpoint,
@@ -228,7 +228,7 @@ namespace SimpleGraphQL
             }
             else
             {
-                // if no other subscriptions existm close connection again
+                // if no other subscriptions exist, close connection again
                 if (RunningSubscriptions.Count == 0)
                 {
                     Debug.Log("No running subscription remain: close connection");
