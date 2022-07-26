@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
+using UnityEngine;
 
 namespace SimpleGraphQL
 {
@@ -20,6 +21,9 @@ namespace SimpleGraphQL
         public string Endpoint;
         public string AuthScheme;
 
+        // track the running subscriptions ids
+        internal HashSet<string> RunningSubscriptions;
+
         public GraphQLClient(
             string endpoint,
             IEnumerable<Query> queries = null,
@@ -31,6 +35,7 @@ namespace SimpleGraphQL
             AuthScheme = authScheme;
             SearchableQueries = queries?.ToList();
             CustomHeaders = headers;
+            RunningSubscriptions = new HashSet<string>();
         }
 
         public GraphQLClient(GraphQLConfig config)
@@ -39,6 +44,7 @@ namespace SimpleGraphQL
             SearchableQueries = config.Files.SelectMany(x => x.Queries).ToList();
             CustomHeaders = config.CustomHeaders.ToDictionary(header => header.Key, header => header.Value);
             AuthScheme = config.AuthScheme;
+            RunningSubscriptions = new HashSet<string>();
         }
 
         /// <summary>
@@ -171,28 +177,7 @@ namespace SimpleGraphQL
             string protocol = "graphql-ws"
         )
         {
-            if (CustomHeaders != null)
-            {
-                if (headers == null) headers = new Dictionary<string, string>();
-
-                foreach (KeyValuePair<string, string> header in CustomHeaders)
-                {
-                    headers.Add(header.Key, header.Value);
-                }
-            }
-
-            if (authScheme == null)
-            {
-                authScheme = AuthScheme;
-            }
-
-            if (!HttpUtils.IsWebSocketReady())
-            {
-                // Prepare the socket before continuing.
-                await HttpUtils.WebSocketConnect(Endpoint, headers, authToken, authScheme, protocol);
-            }
-
-            return await HttpUtils.WebSocketSubscribe(request.Query.ToMurmur2Hash().ToString(), request);
+            return await Subscribe(request.Query.ToMurmur2Hash().ToString(), request, headers, authToken, authScheme, protocol);
         }
 
         /// <summary>
@@ -231,11 +216,27 @@ namespace SimpleGraphQL
 
             if (!HttpUtils.IsWebSocketReady())
             {
+                Debug.Log("websocket not ready: open connection");
                 // Prepare the socket before continuing.
                 await HttpUtils.WebSocketConnect(Endpoint, headers, authToken, authScheme, protocol);
             }
 
-            return await HttpUtils.WebSocketSubscribe(id, request);
+            bool success = await HttpUtils.WebSocketSubscribe(id, request);
+            if (success)
+            {
+                RunningSubscriptions.Add(id);
+            }
+            else
+            {
+                // if no other subscriptions exist, close connection again
+                if (RunningSubscriptions.Count == 0)
+                {
+                    Debug.Log("No running subscription remain: close connection");
+                    await HttpUtils.WebSocketDisconnect();
+                }
+            }
+            return success;
+
         }
 
 
@@ -245,13 +246,7 @@ namespace SimpleGraphQL
         /// <param name="request"></param>
         public async Task Unsubscribe(Request request)
         {
-            if (!HttpUtils.IsWebSocketReady())
-            {
-                // Socket is already apparently closed, so this wouldn't work anyways.
-                return;
-            }
-
-            await HttpUtils.WebSocketUnsubscribe(request.Query.ToMurmur2Hash().ToString());
+            await Unsubscribe(request.Query.ToMurmur2Hash().ToString());
         }
 
         /// <summary>
@@ -266,7 +261,26 @@ namespace SimpleGraphQL
                 return;
             }
 
+            // when unsubscribing an unexisting id (or already unsubscribed)
+            if (!RunningSubscriptions.Contains(id))
+            {
+                Debug.LogError("Attempted to unsubscribe to a query without subscribing first!");
+                return;
+            }
+
+            // TODO: what if this fails?
             await HttpUtils.WebSocketUnsubscribe(id);
+
+            RunningSubscriptions.Remove(id);
+
+            // if no active subscriptions remain, stop the connection
+            // this will also stop the update loop
+            if (RunningSubscriptions.Count == 0)
+            {
+                Debug.Log("No running subscription remain: close connection");
+                await HttpUtils.WebSocketDisconnect();
+                Debug.Log("connection closed");
+            }
         }
 
         /// <summary>
