@@ -85,7 +85,7 @@ var request = new Request
 };
 var responseType = new { continent = new { name = "" } };
 var response = await client.Send(() => responseType, request);
-Debug.Log(response.Result.Data.continent.name);
+Debug.Log(response.Data.continent.name);
 ```
 
 SimpleGraphQL also lets you store queries in .graphql files that you must write yourself. It is up to you to make sure
