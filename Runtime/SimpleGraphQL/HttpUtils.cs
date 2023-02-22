@@ -358,9 +358,11 @@ namespace SimpleGraphQL
                             {
                                 SubscriptionDataReceived?.Invoke(jToken.ToString());
 
+                                //popeveryday fix bug no key here
                                 if (id != null)
                                 {
-                                    SubscriptionDataReceivedPerChannel?[id]?.Invoke(jToken.ToString());
+                                    if(SubscriptionDataReceivedPerChannel != null && SubscriptionDataReceivedPerChannel.ContainsKey(id))
+                                        SubscriptionDataReceivedPerChannel?[id]?.Invoke(jToken.ToString());
                                 }
                             }
 
