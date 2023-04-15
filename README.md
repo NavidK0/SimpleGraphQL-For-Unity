@@ -63,7 +63,7 @@ You can add this library to your project using the Package Manager.
 
 Go to the package manager and click on "Add package from git URL".  
 From there, add this URL:  
-`https://github.com/LastAbyss/SimpleGraphQL-For-Unity.git`
+`https://github.com/ngoninteractive/SimpleGraphQL-For-Unity.git`
 
 ![show_tutorial_image](https://i.imgur.com/bZtYyfw.gif)
 
