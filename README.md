@@ -1,3 +1,9 @@
+# ⚠️ NOTICE: This project is no longer being maintained.
+Sincerest apologies, but I no longer have the time to maintain this fork. It may have bugs.  
+Feel free to fork, however no pull request or bug report will be answered.
+
+ If you would like to take over this project, feel free to reach out!
+
 # SimpleGraphQL For Unity
 
 SimpleGraphQL is just that -- a simple GraphQL client that is mostly code based and works with Unity.
